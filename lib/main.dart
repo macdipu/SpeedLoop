@@ -27,12 +27,12 @@ void main() async {
     DeviceOrientation.portraitUp,
   ]);
 
-  runApp(const GpsSpeedometerApp());
+  runApp(const SpeedLoopApp());
 }
 
 
-class GpsSpeedometerApp extends StatelessWidget {
-  const GpsSpeedometerApp({super.key});
+class SpeedLoopApp extends StatelessWidget {
+  const SpeedLoopApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +44,7 @@ class GpsSpeedometerApp extends StatelessWidget {
     final settings = Get.find<SettingsController>();
 
     return Obx(() => GetMaterialApp(
-      title: 'GPS Speedometer',
+      title: 'SpeedLoop',
       debugShowCheckedModeBanner: false,
 
       // Theme (Reactive)

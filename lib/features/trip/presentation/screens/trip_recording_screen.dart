@@ -178,7 +178,7 @@ class _LiveTripMapState extends State<_LiveTripMap> {
         children: [
           flutterMap.TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.chowdhuryelab.gps_speedometer',
+            userAgentPackageName: 'com.chowdhuryelab.speedloop',
           ),
           if (points.length >= 2)
             flutterMap.PolylineLayer(

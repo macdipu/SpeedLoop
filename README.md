@@ -1,4 +1,4 @@
-# GPS Speedometer & Trip Analysis App
+# SpeedLoop - GPS Speedometer & Trip Analysis
 
 A production-ready Flutter application for tracking real-time speed, recording trips, and analyzing driving data. Built with Vertical Slice Architecture and Clean Architecture principles.
 

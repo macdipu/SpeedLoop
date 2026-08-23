@@ -1,5 +1,5 @@
 /// Core Database Module
-/// Configures the Drift SQLite database for GPS Speedometer app.
+/// Configures the Drift SQLite database for SpeedLoop app.
 
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
@@ -56,7 +56,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'gps_speedometer_db');
+    return driftDatabase(name: 'speedloop_db');
   }
 }
 

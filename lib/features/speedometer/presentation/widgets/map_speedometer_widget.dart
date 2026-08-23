@@ -64,7 +64,7 @@ class _MapSpeedometerWidgetState extends State<MapSpeedometerWidget> {
               TileLayer(
                 urlTemplate:
                     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.chowdhuryelab.gps_speedometer',
+                userAgentPackageName: 'com.chowdhuryelab.speedloop',
               ),
               MarkerLayer(
                 markers: [

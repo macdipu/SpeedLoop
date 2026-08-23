@@ -7,13 +7,20 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:gps_speedometer/main.dart';
+import 'package:speedloop/main.dart';
+import 'package:speedloop/features/settings/presentation/controllers/settings_controller.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('App builds smoke test', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    Get.put(SettingsController());
+
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const GpsSpeedometerApp());
+    await tester.pumpWidget(const SpeedLoopApp());
+    await tester.pumpAndSettle(const Duration(seconds: 2));
 
     // Verify app builds
     expect(find.byType(MaterialApp), findsOneWidget);

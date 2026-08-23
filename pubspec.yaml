@@ -1,5 +1,5 @@
-name: gps_speedometer
-description: GPS Speedometer & Trip Analysis - Production-ready app by Chowdhury eLab
+name: speedloop
+description: SpeedLoop - GPS Speedometer, Trip Analysis & Dashcam by Chowdhury eLab
 publish_to: 'none'
 version: 1.0.0+1
 

@@ -57,7 +57,7 @@ void onBgServiceStart(ServiceInstance service) async {
 
     if (service is AndroidServiceInstance) {
       service.setForegroundNotificationInfo(
-        title: 'GPS Speedometer — Recording',
+        title: 'SpeedLoop — Recording',
         content: '${speedKmh.toStringAsFixed(1)} km/h',
       );
     }

@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:xml/xml.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:gps_speedometer/features/trip/domain/entities/trip_entity.dart';
+import 'package:speedloop/features/trip/domain/entities/trip_entity.dart';
 
 class GpxService {
   GpxService._();
@@ -37,7 +37,7 @@ class GpxService {
     builder.processing('xml', 'version="1.0" encoding="UTF-8"');
     builder.element('gpx', attributes: {
       'version': '1.1',
-      'creator': 'GPS Speedometer - chowdhuryelab',
+      'creator': 'SpeedLoop - chowdhuryelab',
       'xmlns': 'http://www.topografix.com/GPX/1/1',
     }, nest: () {
       builder.element('metadata', nest: () {

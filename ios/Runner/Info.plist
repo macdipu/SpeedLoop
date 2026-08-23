@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Gps Speedometer</string>
+	<string>SpeedLoop</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>gps_speedometer</string>
+	<string>speedloop</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -27,13 +27,13 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>GPS Speedometer uses the camera for the dashcam speed overlay feature.</string>
+	<string>SpeedLoop uses the camera for the dashcam speed overlay feature.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>GPS Speedometer needs background location to record trips while the app is in the background.</string>
+	<string>SpeedLoop needs background location to record trips while the app is in the background.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>GPS Speedometer needs always-on location for background trip recording.</string>
+	<string>SpeedLoop needs always-on location for background trip recording.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>GPS Speedometer needs location access to track your speed and record trips.</string>
+	<string>SpeedLoop needs location access to track your speed and record trips.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

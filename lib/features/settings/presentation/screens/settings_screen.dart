@@ -248,7 +248,7 @@ class SettingsScreen extends StatelessWidget {
                 Icon(Icons.speed,
                     color: context.primaryColor, size: 40),
                 const SizedBox(height: 8),
-                Text('GPS Speedometer',
+                Text('SpeedLoop',
                     style: TextStyle(
                         color: context.textPrimaryColor,
                         fontWeight: FontWeight.w700,

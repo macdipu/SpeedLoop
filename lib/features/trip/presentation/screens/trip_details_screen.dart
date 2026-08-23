@@ -167,7 +167,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                 TileLayer(
                   urlTemplate:
                       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.chowdhuryelab.gps_speedometer',
+                  userAgentPackageName: 'com.chowdhuryelab.speedloop',
                 ),
                 if (latLngs.length >= 2)
                   PolylineLayer(
@@ -508,7 +508,7 @@ class _TripShareCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'GPS SPEEDOMETER',
+                          'SPEEDLOOP',
                           style: TextStyle(
                             color: _accent,
                             fontSize: 10,
@@ -711,7 +711,7 @@ class _TripShareCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      'GPS Speedometer',
+                      'SpeedLoop',
                       style: TextStyle(
                         color: _sub,
                         fontSize: 11,

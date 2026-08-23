@@ -2,14 +2,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:gps_speedometer/core/utils/app_theme.dart';
-import 'package:gps_speedometer/features/speedometer/presentation/screens/speedometer_screen.dart';
-import 'package:gps_speedometer/features/speedometer/presentation/controllers/speedometer_controller.dart';
-import 'package:gps_speedometer/features/trip/presentation/screens/trip_recording_screen.dart';
-import 'package:gps_speedometer/features/trip/presentation/screens/trip_history_screen.dart';
-import 'package:gps_speedometer/features/trip/presentation/controllers/trip_controller.dart';
-import 'package:gps_speedometer/features/dashcam/presentation/screens/dashcam_screen.dart';
-import 'package:gps_speedometer/features/dashcam/presentation/controllers/dashcam_controller.dart';
+import 'package:speedloop/core/utils/app_theme.dart';
+import 'package:speedloop/features/speedometer/presentation/screens/speedometer_screen.dart';
+import 'package:speedloop/features/speedometer/presentation/controllers/speedometer_controller.dart';
+import 'package:speedloop/features/trip/presentation/screens/trip_recording_screen.dart';
+import 'package:speedloop/features/trip/presentation/screens/trip_history_screen.dart';
+import 'package:speedloop/features/trip/presentation/controllers/trip_controller.dart';
+import 'package:speedloop/features/dashcam/presentation/screens/dashcam_screen.dart';
+import 'package:speedloop/features/dashcam/presentation/controllers/dashcam_controller.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
