@@ -1,0 +1,252 @@
+name: Build APK and Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: >
+          Release tag to publish (e.g. v1.2.3). Leave empty to fall back to
+          a run-numbered tag - useful for testing this workflow without
+          cutting a real release.
+        required: false
+      play_track:
+        description: >
+          Google Play track to upload to. Only used when the
+          PLAY_SERVICE_ACCOUNT_JSON secret exists; without it the Play upload
+          is skipped and this workflow just builds and attaches artifacts to a
+          GitHub release. Pick "none" to force-skip the Play upload for this
+          run even if the secret is present (APK/AAB still build and attach to
+          the GitHub release). A tag push always uses "production".
+        required: false
+        default: none
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
+          - none
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # This repo requires Java 17 (see android/app/build.gradle
+      # compileOptions/kotlinOptions - needed by flutter_local_notifications
+      # 22.x's core library desugaring).
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android/sdk/ndk \
+            /usr/local/lib/android/sdk/cmake "$AGENT_TOOLSDIRECTORY" \
+            /opt/hostedtoolcache/CodeQL
+          sudo docker image prune -a -f || true
+          df -h /
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # The keystore never lives in the repo. It is stored as a base64 secret
+      # and materialised here for the length of the job only. Without these
+      # secrets the build still succeeds but falls back to the debug key (see
+      # android/app/build.gradle) - which the verification step below then
+      # rejects, so an unsigned build can never be published by accident.
+      # Gated on a step output, not `if: env.KEYSTORE_BASE64 != ''`. A step
+      # cannot read an env var it declares itself from its own `if:` - the env
+      # context there only sees workflow/job level vars, so the expression was
+      # always empty and this step was always skipped. That left key.properties
+      # unwritten, the build fell back to the debug key, and the verification
+      # step below then failed the run.
+      - name: Check for signing keystore
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::ANDROID_KEYSTORE_BASE64 not set - the release will be debug-signed and the signature check will fail the run."
+          fi
+
+      - name: Restore signing keystore
+        if: steps.keystore.outputs.present == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storeFile=upload-keystore.jks
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      # Per-ABI APKs for the GitHub release (a universal APK is ~250MB and
+      # over the Play limit), plus an app bundle for the Play Console.
+      # --target-platform drops the emulator-only x86_64 slice. It has to be
+      # done here rather than with `ndk { abiFilters }` in build.gradle:
+      # Flutter injects libapp.so/libflutter.so outside the NDK pipeline, so
+      # abiFilters silently leaves them in.
+      - name: Build release APKs
+        run: |
+          flutter build apk --release --split-per-abi \
+            --target-platform android-arm,android-arm64
+
+      - name: Build release app bundle
+        run: |
+          flutter build appbundle --release \
+            --target-platform android-arm,android-arm64
+
+      - name: Verify the release APK is not debug-signed
+        run: |
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          APK=$(ls build/app/outputs/flutter-apk/app-arm64-v8a-release.apk)
+          SIGNER=$("$BUILD_TOOLS/apksigner" verify --print-certs "$APK" \
+            | grep 'Signer #1 certificate DN' || true)
+          echo "$SIGNER"
+          if echo "$SIGNER" | grep -q 'CN=Android Debug'; then
+            echo "::error::Release artifact is signed with the DEBUG key - refusing to publish."
+            exit 1
+          fi
+
+      - name: Determine release tag
+        id: tag
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          elif [[ -n "${{ inputs.version }}" ]]; then
+            echo "tag=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=build-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Collect release artifacts
+        run: |
+          mkdir -p release
+          TAG="${{ steps.tag.outputs.tag }}"
+          for abi in arm64-v8a armeabi-v7a; do
+            src="build/app/outputs/flutter-apk/app-$abi-release.apk"
+            [ -f "$src" ] && cp "$src" "release/muslim-deen-$abi-$TAG.apk"
+          done
+          cp build/app/outputs/bundle/release/app-release.aab \
+             "release/muslim-deen-$TAG.aab"
+          ls -lh release/
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            release/*.apk
+            release/*.aab
+
+      # Points the GitHub Pages landing page's "Download APK" links at the tag
+      # just released. Done from a worktree checked out at origin/main - the
+      # job's own HEAD is the tag (detached, possibly diverged from main), so
+      # committing there and pushing HEAD:main would push the tag's whole
+      # history onto main instead of just this file edit.
+      - name: Update GitHub Pages download link
+        if: github.ref_type == 'tag'
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          git fetch origin main
+          git worktree add /tmp/pages-main origin/main
+          sed -i -E "s#releases/tag/v[0-9]+\.[0-9]+\.[0-9]+#releases/tag/$TAG#g" \
+            /tmp/pages-main/docs/index.html
+          cd /tmp/pages-main
+          if ! git diff --quiet -- docs/index.html; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add docs/index.html
+            git commit -m "docs: point download link at $TAG"
+            git push origin HEAD:main
+          fi
+
+      # --- Google Play upload -------------------------------------------------
+      # Everything below is skipped when PLAY_SERVICE_ACCOUNT_JSON is absent, so
+      # forks and credential-less runs still build and publish to GitHub.
+      #
+      # The gate is a step output rather than `if: env.X != ''`, because a step
+      # cannot read an env var it defines itself in its own `if:` - that
+      # silently evaluates to empty and skips the step.
+      # A tag push is a real release and always goes to Play; a manual run can
+      # opt out entirely by picking play_track "none" (e.g. to cut a
+      # GitHub-only APK/AAB release without touching the Play Console).
+      - name: Check for Play credentials
+        id: playcreds
+        env:
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -n "$PLAY_JSON" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::PLAY_SERVICE_ACCOUNT_JSON not set - skipping Google Play upload."
+          fi
+
+      - name: Resolve Play track
+        id: playtrack
+        if: steps.playcreds.outputs.present == 'true' && (github.ref_type == 'tag' || inputs.play_track != 'none')
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "track=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "track=${{ inputs.play_track }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Ruby
+        if: steps.playtrack.outputs.track != ''
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install fastlane
+        if: steps.playtrack.outputs.track != ''
+        run: gem install fastlane -N
+
+      # Uploads the bundle *and* the whole store listing - title, both
+      # descriptions, icon, feature graphic and screenshots - from
+      # fastlane/metadata/android. That is the point of doing it this way: the
+      # Play Console's own upload controls open a native file picker, which
+      # nothing headless can drive.
+      - name: Upload to Google Play
+        if: steps.playtrack.outputs.track != ''
+        env:
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          # Written to a file rather than passed as --json_key_data: anything in
+          # argv is readable by other processes on the runner, and multi-line
+          # JSON on a command line is a quoting hazard. Removed on any exit.
+          umask 077
+          printf '%s' "$PLAY_JSON" > play-key.json
+          trap 'rm -f play-key.json' EXIT
+          fastlane supply \
+            --package_name com.chowdhuryelab.muslimdeen \
+            --aab build/app/outputs/bundle/release/app-release.aab \
+            --track "${{ steps.playtrack.outputs.track }}" \
+            --release_status completed \
+            --metadata_path fastlane/metadata/android \
+            --json_key play-key.json
