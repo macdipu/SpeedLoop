@@ -1,6 +1,7 @@
 /// Formatters
 /// Utility functions for formatting speed, distance, duration, and time
 /// for display in the UI.
+library;
 
 class Formatters {
   Formatters._();
@@ -69,8 +70,18 @@ class Formatters {
   /// Format DateTime as "16 Mar 2026"
   static String date(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }

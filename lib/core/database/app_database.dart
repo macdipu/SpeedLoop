@@ -1,5 +1,6 @@
 /// Core Database Module
 /// Configures the Drift SQLite database for SpeedLoop app.
+library;
 
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
@@ -39,20 +40,38 @@ class TripPointsTable extends Table {
   DateTimeColumn get timestamp => dateTime()();
 }
 
+class DashcamClipsTable extends Table {
+  @override
+  String get tableName => 'dashcam_clips';
+
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get path => text().unique()();
+  DateTimeColumn get createdAt => dateTime()();
+  BoolColumn get isLocked => boolean().withDefault(const Constant(false))();
+  IntColumn get sizeBytes => integer().withDefault(const Constant(0))();
+}
+
 // ---------------------------------------------------------------------------
 // DATABASE
 // ---------------------------------------------------------------------------
 
-@DriftDatabase(tables: [TripsTable, TripPointsTable], daos: [TripDao, TripPointDao])
+@DriftDatabase(
+  tables: [TripsTable, TripPointsTable, DashcamClipsTable],
+  daos: [TripDao, TripPointDao, DashcamClipDao],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+  AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async { await m.createAll(); },
+        onCreate: (m) async => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) await m.createTable(dashcamClipsTable);
+        },
       );
 
   static QueryExecutor _openConnection() {
@@ -69,10 +88,12 @@ class TripDao extends DatabaseAccessor<AppDatabase> with _$TripDaoMixin {
   TripDao(super.db);
 
   Future<List<TripsTableData>> getAllTrips() =>
-      (select(tripsTable)..orderBy([(t) => OrderingTerm.desc(t.startTime)])).get();
+      (select(tripsTable)..orderBy([(t) => OrderingTerm.desc(t.startTime)]))
+          .get();
 
   Stream<List<TripsTableData>> watchAllTrips() =>
-      (select(tripsTable)..orderBy([(t) => OrderingTerm.desc(t.startTime)])).watch();
+      (select(tripsTable)..orderBy([(t) => OrderingTerm.desc(t.startTime)]))
+          .watch();
 
   Future<TripsTableData?> getTripById(int id) =>
       (select(tripsTable)..where((t) => t.id.equals(id))).getSingleOrNull();
@@ -80,14 +101,16 @@ class TripDao extends DatabaseAccessor<AppDatabase> with _$TripDaoMixin {
   Future<int> insertTrip(TripsTableCompanion trip) =>
       into(tripsTable).insert(trip);
 
-  Future<bool> updateTrip(TripsTableData trip) => update(tripsTable).replace(trip);
+  Future<bool> updateTrip(TripsTableData trip) =>
+      update(tripsTable).replace(trip);
 
   Future<int> deleteTrip(int id) =>
       (delete(tripsTable)..where((t) => t.id.equals(id))).go();
 }
 
 @DriftAccessor(tables: [TripPointsTable])
-class TripPointDao extends DatabaseAccessor<AppDatabase> with _$TripPointDaoMixin {
+class TripPointDao extends DatabaseAccessor<AppDatabase>
+    with _$TripPointDaoMixin {
   TripPointDao(super.db);
 
   Future<List<TripPointsTableData>> getPointsForTrip(int tripId) =>
@@ -95,6 +118,13 @@ class TripPointDao extends DatabaseAccessor<AppDatabase> with _$TripPointDaoMixi
             ..where((p) => p.tripId.equals(tripId))
             ..orderBy([(p) => OrderingTerm.asc(p.timestamp)]))
           .get();
+
+  Future<TripPointsTableData?> getLastPointForTrip(int tripId) =>
+      (select(tripPointsTable)
+            ..where((p) => p.tripId.equals(tripId))
+            ..orderBy([(p) => OrderingTerm.desc(p.timestamp)])
+            ..limit(1))
+          .getSingleOrNull();
 
   Stream<List<TripPointsTableData>> watchPointsForTrip(int tripId) =>
       (select(tripPointsTable)
@@ -110,4 +140,27 @@ class TripPointDao extends DatabaseAccessor<AppDatabase> with _$TripPointDaoMixi
 
   Future<int> deletePointsForTrip(int tripId) =>
       (delete(tripPointsTable)..where((p) => p.tripId.equals(tripId))).go();
+}
+
+@DriftAccessor(tables: [DashcamClipsTable])
+class DashcamClipDao extends DatabaseAccessor<AppDatabase>
+    with _$DashcamClipDaoMixin {
+  DashcamClipDao(super.db);
+
+  Future<List<DashcamClipsTableData>> getAllClips() =>
+      (select(dashcamClipsTable)
+            ..orderBy([(clip) => OrderingTerm.asc(clip.createdAt)]))
+          .get();
+
+  Future<void> upsertClip(DashcamClipsTableCompanion clip) =>
+      into(dashcamClipsTable).insertOnConflictUpdate(clip);
+
+  Future<int> setLocked(String path, bool locked) =>
+      (update(dashcamClipsTable)..where((clip) => clip.path.equals(path)))
+          .write(
+        DashcamClipsTableCompanion(isLocked: Value(locked)),
+      );
+
+  Future<int> deleteByPath(String path) =>
+      (delete(dashcamClipsTable)..where((clip) => clip.path.equals(path))).go();
 }

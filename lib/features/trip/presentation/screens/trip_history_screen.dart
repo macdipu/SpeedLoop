@@ -1,4 +1,5 @@
 /// TripHistoryScreen — list of all recorded trips with summary cards.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -24,8 +25,7 @@ class TripHistoryScreen extends StatelessWidget {
         title: Text('trips'.tr),
         actions: [
           IconButton(
-            icon: Icon(Icons.file_upload_outlined,
-                color: context.primaryColor),
+            icon: Icon(Icons.file_upload_outlined, color: context.primaryColor),
             onPressed: controller.importGpx,
             tooltip: 'import_gpx'.tr,
           ),
@@ -38,21 +38,18 @@ class TripHistoryScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.route,
-                    size: 72, color: context.textDisabledColor),
+                Icon(Icons.route, size: 72, color: context.textDisabledColor),
                 const SizedBox(height: 16),
                 Text(
                   'no_trips'.tr,
                   style: TextStyle(
-                      color: context.textSecondaryColor,
-                      fontSize: 16),
+                      color: context.textSecondaryColor, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Go to the Record tab and press START',
-                  style: TextStyle(
-                      color: context.textDisabledColor,
-                      fontSize: 13),
+                  style:
+                      TextStyle(color: context.textDisabledColor, fontSize: 13),
                 ),
               ],
             ),
@@ -95,8 +92,7 @@ class TripHistoryScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('cancel'.tr,
-                style:
-                    TextStyle(color: context.textSecondaryColor)),
+                style: TextStyle(color: context.textSecondaryColor)),
           ),
           TextButton(
             onPressed: () {
@@ -224,8 +220,7 @@ class _TripStat extends StatelessWidget {
         Icon(icon, size: 14, color: ctx.textSecondaryColor),
         const SizedBox(width: 4),
         Text(label,
-            style: TextStyle(
-                color: ctx.textSecondaryColor, fontSize: 12)),
+            style: TextStyle(color: ctx.textSecondaryColor, fontSize: 12)),
       ],
     );
   }

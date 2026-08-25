@@ -1,5 +1,6 @@
 /// Analysis Feature — Domain Entity
 /// Holds computed statistics for a trip analysis session.
+library;
 
 /// Result of a 0→N km/h acceleration event
 class AccelerationEvent {

@@ -1,4 +1,5 @@
 /// TripDetailsScreen — detailed view of a trip with route map and stats.
+library;
 
 import 'dart:io';
 import 'dart:math' as math;
@@ -48,7 +49,12 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
 
   Future<void> _loadTrip(int id) async {
     final t = await controller.getTrip(id);
-    if (mounted) setState(() { trip = t; loading = false; });
+    if (mounted) {
+      setState(() {
+        trip = t;
+        loading = false;
+      });
+    }
   }
 
   void _togglePlayback() {
@@ -78,7 +84,6 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     } catch (e) {
       Get.snackbar('export_failed'.tr, e.toString(),
           snackPosition: SnackPosition.BOTTOM);
-
     }
   }
 
@@ -165,8 +170,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.chowdhuryelab.speedloop',
                 ),
                 if (latLngs.length >= 2)
@@ -184,19 +188,22 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                     markers: [
                       Marker(
                         point: latLngs.first,
-                        width: 28, height: 28,
+                        width: 28,
+                        height: 28,
                         child: const Icon(Icons.circle,
                             color: AppColors.success, size: 20),
                       ),
                       Marker(
                         point: latLngs[_playbackIdx],
-                        width: 32, height: 32,
+                        width: 32,
+                        height: 32,
                         child: const Icon(Icons.navigation,
                             color: AppColors.accent, size: 28),
                       ),
                       Marker(
                         point: latLngs.last,
-                        width: 28, height: 28,
+                        width: 28,
+                        height: 28,
                         child: const Icon(Icons.flag,
                             color: AppColors.error, size: 24),
                       ),
@@ -212,16 +219,16 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  _statRow(context, 'Start',
-                      Formatters.dateTime(trip!.startTime)),
+                  _statRow(
+                      context, 'Start', Formatters.dateTime(trip!.startTime)),
                   _statRow(
                       context,
                       'End',
                       trip!.endTime != null
                           ? Formatters.dateTime(trip!.endTime!)
                           : '—'),
-                  _statRow(context, 'Duration',
-                      Formatters.duration(trip!.duration)),
+                  _statRow(
+                      context, 'Duration', Formatters.duration(trip!.duration)),
                   _statRow(context, 'Distance',
                       Formatters.distance(trip!.distanceMeters)),
                   Obx(() {
@@ -256,8 +263,8 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       child: Row(
         children: [
           Text(label,
-              style: TextStyle(
-                  color: context.textSecondaryColor, fontSize: 14)),
+              style:
+                  TextStyle(color: context.textSecondaryColor, fontSize: 14)),
           const Spacer(),
           Text(value,
               style: TextStyle(
@@ -339,7 +346,8 @@ class _SharePreviewSheetState extends State<_SharePreviewSheet> {
           // Handle
           const SizedBox(height: 12),
           Container(
-            width: 40, height: 4,
+            width: 40,
+            height: 4,
             decoration: BoxDecoration(
               color: context.cardBorderColor,
               borderRadius: BorderRadius.circular(2),
@@ -397,8 +405,8 @@ class _SharePreviewSheetState extends State<_SharePreviewSheet> {
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child:
-                            CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
                       )
                     : const Icon(Icons.share_outlined),
                 label: Text(_sharing ? 'Saving...' : 'Share',
@@ -429,23 +437,22 @@ class _TripShareCard extends StatelessWidget {
   final double avgSpeed, maxSpeed;
   final String speedLabel;
 
-  static const _bg1     = Color(0xFF050B1A);
-  static const _bg2     = Color(0xFF0C1830);
+  static const _bg1 = Color(0xFF050B1A);
+  static const _bg2 = Color(0xFF0C1830);
   static const _surface = Color(0xFF0A1628);
-  static const _accent  = Color(0xFF3B82F6);
-  static const _violet  = Color(0xFF8B5CF6);
-  static const _cyan    = Color(0xFF06B6D4);
-  static const _green   = Color(0xFF22C55E);
-  static const _red     = Color(0xFFEF4444);
-  static const _text    = Colors.white;
-  static const _sub     = Color(0xFF8898AA);
+  static const _accent = Color(0xFF3B82F6);
+  static const _violet = Color(0xFF8B5CF6);
+  static const _cyan = Color(0xFF06B6D4);
+  static const _green = Color(0xFF22C55E);
+  static const _red = Color(0xFFEF4444);
+  static const _text = Colors.white;
+  static const _sub = Color(0xFF8898AA);
   static const _divider = Color(0xFF1A2E45);
 
   @override
   Widget build(BuildContext context) {
-    final points = trip.points
-        .map((p) => LatLng(p.latitude, p.longitude))
-        .toList();
+    final points =
+        trip.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
 
     final dateStr = DateFormat('MMM d, yyyy').format(trip.startTime);
     final timeStr = DateFormat('h:mm a').format(trip.startTime);
@@ -538,8 +545,7 @@ class _TripShareCard extends StatelessWidget {
                                 fontWeight: FontWeight.w500)),
                         const SizedBox(height: 2),
                         Text(timeStr,
-                            style: const TextStyle(
-                                color: _sub, fontSize: 10)),
+                            style: const TextStyle(color: _sub, fontSize: 10)),
                       ],
                     ),
                   ],
@@ -578,8 +584,7 @@ class _TripShareCard extends StatelessWidget {
                           ),
                         ),
                         Padding(
-                          padding:
-                              const EdgeInsets.only(bottom: 9, left: 8),
+                          padding: const EdgeInsets.only(bottom: 9, left: 8),
                           child: Text(
                             speedLabel,
                             style: TextStyle(
@@ -622,7 +627,9 @@ class _TripShareCard extends StatelessWidget {
                     ),
                     // Top fade into hero section
                     Positioned(
-                      top: 0, left: 0, right: 0,
+                      top: 0,
+                      left: 0,
+                      right: 0,
                       child: Container(
                         height: 28,
                         decoration: const BoxDecoration(
@@ -636,7 +643,9 @@ class _TripShareCard extends StatelessWidget {
                     ),
                     // Bottom fade into stats
                     Positioned(
-                      bottom: 0, left: 0, right: 0,
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
                       child: Container(
                         height: 28,
                         decoration: const BoxDecoration(
@@ -651,8 +660,7 @@ class _TripShareCard extends StatelessWidget {
                     if (points.isEmpty)
                       const Center(
                         child: Text('No route data',
-                            style:
-                                TextStyle(color: _sub, fontSize: 13)),
+                            style: TextStyle(color: _sub, fontSize: 13)),
                       ),
                     // Start / End legend
                     if (points.isNotEmpty)
@@ -675,23 +683,20 @@ class _TripShareCard extends StatelessWidget {
               // ── 3-stat strip ─────────────────────────────────────────
               Container(
                 color: _surface,
-                padding: const EdgeInsets.symmetric(
-                    vertical: 18, horizontal: 20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
                 child: Row(
                   children: [
                     Expanded(
-                        child: _statCell(
-                            'DISTANCE',
+                        child: _statCell('DISTANCE',
                             Formatters.distance(trip.distanceMeters))),
                     _vDivider(),
                     Expanded(
                         child: _statCell(
-                            'DURATION',
-                            Formatters.duration(trip.duration))),
+                            'DURATION', Formatters.duration(trip.duration))),
                     _vDivider(),
                     Expanded(
-                        child: _statCell(
-                            'AVG SPEED',
+                        child: _statCell('AVG SPEED',
                             '${avgSpeed.toStringAsFixed(1)} $speedLabel')),
                   ],
                 ),
@@ -831,8 +836,8 @@ class _RoutePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (points.length < 2) {
       if (points.length == 1) {
-        canvas.drawCircle(Offset(size.width / 2, size.height / 2), 6,
-            Paint()..color = green);
+        canvas.drawCircle(
+            Offset(size.width / 2, size.height / 2), 6, Paint()..color = green);
       }
       return;
     }
@@ -913,10 +918,8 @@ class _RoutePainter extends CustomPainter {
   }
 
   void _drawMarker(Canvas canvas, Offset pos, Color color) {
-    canvas.drawCircle(pos, 8,
-        Paint()..color = color.withValues(alpha: 0.25));
-    canvas.drawCircle(pos, 5,
-        Paint()..color = color);
+    canvas.drawCircle(pos, 8, Paint()..color = color.withValues(alpha: 0.25));
+    canvas.drawCircle(pos, 5, Paint()..color = color);
     canvas.drawCircle(
         pos,
         3,

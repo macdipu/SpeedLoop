@@ -2,6 +2,7 @@
 /// Uses flutter_tts to announce a spoken speed warning when the user
 /// exceeds the configured speed limit. Enforces a minimum interval between
 /// alerts so they don't fire every GPS ping.
+library;
 
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:get/get.dart';
@@ -47,7 +48,8 @@ class SpeedAlertService {
         await init();
         // Announce in user's display unit
         final unit = settings.speedUnit.value;
-        final displaySpeed = unit == SpeedUnit.kmh ? speedKmh : GpsUtils.kmhToMph(speedKmh);
+        final displaySpeed =
+            unit == SpeedUnit.kmh ? speedKmh : GpsUtils.kmhToMph(speedKmh);
         final unitLabel = unit == SpeedUnit.kmh ? 'km/h' : 'mph';
         final msg =
             'Speed limit exceeded. You are going ${displaySpeed.toStringAsFixed(0)} $unitLabel.';

@@ -1,5 +1,6 @@
 /// Trip Feature — Domain Entities
 /// Pure domain objects — no framework or database dependencies.
+library;
 
 import '../../../../core/database/app_database.dart';
 
@@ -76,7 +77,8 @@ class TripEntity {
 
   bool get isActive => endTime == null;
 
-  factory TripEntity.fromDb(TripsTableData row, {List<TripPointEntity> points = const []}) =>
+  factory TripEntity.fromDb(TripsTableData row,
+          {List<TripPointEntity> points = const []}) =>
       TripEntity(
         id: row.id,
         title: row.title,

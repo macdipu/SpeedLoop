@@ -1,5 +1,6 @@
 /// DashcamScreen
 /// Professional action-camera / dashcam HUD with loop recording support.
+library;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -216,16 +217,13 @@ class _LoopInfoCard extends StatelessWidget {
                 Text(
                   '${'loop_recording'.tr}  ${total ~/ 60} min',
                   style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 11,
-                      letterSpacing: 0.5),
+                      color: Colors.white60, fontSize: 11, letterSpacing: 0.5),
                 ),
                 const Spacer(),
                 if (segCount > 0)
                   Text(
                     '$segCount clips',
-                    style: const TextStyle(
-                        color: Colors.white38, fontSize: 11),
+                    style: const TextStyle(color: Colors.white38, fontSize: 11),
                   ),
               ],
             ),
@@ -237,8 +235,7 @@ class _LoopInfoCard extends StatelessWidget {
               children: [
                 Text(
                   'current_clip'.tr,
-                  style: const TextStyle(
-                      color: Colors.white54, fontSize: 11),
+                  style: const TextStyle(color: Colors.white54, fontSize: 11),
                 ),
                 const Spacer(),
                 Text(
@@ -282,8 +279,7 @@ class _LoopInfoCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   'next_clip_in'.tr,
-                  style: const TextStyle(
-                      color: Colors.white38, fontSize: 11),
+                  style: const TextStyle(color: Colors.white38, fontSize: 11),
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -302,8 +298,8 @@ class _LoopInfoCard extends StatelessWidget {
                     color: Colors.white24, size: 12),
                 const SizedBox(width: 3),
                 Text(storageStr,
-                    style: const TextStyle(
-                        color: Colors.white38, fontSize: 11)),
+                    style:
+                        const TextStyle(color: Colors.white38, fontSize: 11)),
               ],
             ),
           ],
@@ -401,9 +397,7 @@ class _PillBadge extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-            color: Colors.white,
-            fontSize: 11,
-            fontWeight: FontWeight.w700),
+            color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -555,9 +549,8 @@ class _RecordButtonState extends State<_RecordButton>
                 height: 64,
                 decoration: BoxDecoration(
                   color: widget.isRecording ? Colors.red : AppColors.primary,
-                  shape: widget.isRecording
-                      ? BoxShape.rectangle
-                      : BoxShape.circle,
+                  shape:
+                      widget.isRecording ? BoxShape.rectangle : BoxShape.circle,
                   borderRadius:
                       widget.isRecording ? BorderRadius.circular(10) : null,
                 ),

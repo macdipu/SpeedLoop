@@ -1,7 +1,8 @@
 /// TripRecordingScreen — Start/Stop trip recording with live stats display.
+library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart' as flutterMap;
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart' as latlong2;
 
@@ -24,7 +25,11 @@ class TripRecordingScreen extends StatelessWidget {
         title: Text('trip_recording'.tr),
       ),
       body: Obx(() {
-        final recording = controller.isRecording.value;
+        final state = controller.recordingState.value;
+        final recording = state == TripRecordingState.recording ||
+            state == TripRecordingState.stopping;
+        final transitioning = state == TripRecordingState.starting ||
+            state == TripRecordingState.stopping;
         final unit = settings.speedUnit.value;
         final unitLabel = unit == SpeedUnit.kmh ? 'km/h' : 'mph';
         final dispSpeed = unit == SpeedUnit.kmh
@@ -42,7 +47,8 @@ class TripRecordingScreen extends StatelessWidget {
               children: [
                 _RecordButton(
                   isRecording: true,
-                  onTap: controller.stopTrip,
+                  isBusy: transitioning,
+                  onTap: transitioning ? null : controller.stopTrip,
                 ),
                 const SizedBox(height: 24),
                 GridView.count(
@@ -62,8 +68,8 @@ class TripRecordingScreen extends StatelessWidget {
                     ),
                     _LiveStatCard(
                       label: 'DISTANCE',
-                      value: Formatters.distance(
-                          controller.currentDistance.value),
+                      value:
+                          Formatters.distance(controller.currentDistance.value),
                       icon: Icons.route,
                       color: AppColors.info,
                     ),
@@ -100,7 +106,8 @@ class TripRecordingScreen extends StatelessWidget {
             children: [
               _RecordButton(
                 isRecording: false,
-                onTap: controller.startTrip,
+                isBusy: transitioning,
+                onTap: transitioning ? null : controller.startTrip,
               ),
               const SizedBox(height: 32),
               Icon(Icons.route_outlined,
@@ -109,8 +116,8 @@ class TripRecordingScreen extends StatelessWidget {
               Text(
                 'Press START to begin recording\nyour trip',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: context.textSecondaryColor, fontSize: 16),
+                style:
+                    TextStyle(color: context.textSecondaryColor, fontSize: 16),
               ),
             ],
           ),
@@ -131,14 +138,14 @@ class _LiveTripMap extends StatefulWidget {
 }
 
 class _LiveTripMapState extends State<_LiveTripMap> {
-  late final flutterMap.MapController _mapController;
+  late final flutter_map.MapController _mapController;
   bool _mapReady = false;
   Worker? _posWorker;
 
   @override
   void initState() {
     super.initState();
-    _mapController = flutterMap.MapController();
+    _mapController = flutter_map.MapController();
     _posWorker = ever(widget.controller.livePoints, (_) {
       if (_mapReady && widget.controller.livePoints.isNotEmpty) {
         final last = widget.controller.livePoints.last;
@@ -165,25 +172,25 @@ class _LiveTripMapState extends State<_LiveTripMap> {
           ? latlong2.LatLng(points.last.latitude, points.last.longitude)
           : const latlong2.LatLng(0, 0);
 
-      return flutterMap.FlutterMap(
+      return flutter_map.FlutterMap(
         mapController: _mapController,
-        options: flutterMap.MapOptions(
+        options: flutter_map.MapOptions(
           initialCenter: center,
           initialZoom: 16,
           onMapReady: () => _mapReady = true,
-          interactionOptions: const flutterMap.InteractionOptions(
-            flags: flutterMap.InteractiveFlag.all,
+          interactionOptions: const flutter_map.InteractionOptions(
+            flags: flutter_map.InteractiveFlag.all,
           ),
         ),
         children: [
-          flutterMap.TileLayer(
+          flutter_map.TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
             userAgentPackageName: 'com.chowdhuryelab.speedloop',
           ),
           if (points.length >= 2)
-            flutterMap.PolylineLayer(
+            flutter_map.PolylineLayer(
               polylines: [
-                flutterMap.Polyline(
+                flutter_map.Polyline(
                   points: points
                       .map((p) => latlong2.LatLng(p.latitude, p.longitude))
                       .toList(),
@@ -193,9 +200,9 @@ class _LiveTripMapState extends State<_LiveTripMap> {
               ],
             ),
           if (points.isNotEmpty)
-            flutterMap.MarkerLayer(
+            flutter_map.MarkerLayer(
               markers: [
-                flutterMap.Marker(
+                flutter_map.Marker(
                   point: center,
                   width: 24,
                   height: 24,
@@ -218,9 +225,14 @@ class _LiveTripMapState extends State<_LiveTripMap> {
 // ---------------------------------------------------------------------------
 
 class _RecordButton extends StatefulWidget {
-  const _RecordButton({required this.isRecording, required this.onTap});
+  const _RecordButton({
+    required this.isRecording,
+    required this.isBusy,
+    required this.onTap,
+  });
   final bool isRecording;
-  final VoidCallback onTap;
+  final bool isBusy;
+  final VoidCallback? onTap;
 
   @override
   State<_RecordButton> createState() => _RecordButtonState();
@@ -273,12 +285,11 @@ class _RecordButtonState extends State<_RecordButton>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: widget.isRecording
-                    ? AppColors.error.withOpacity(0.15)
-                    : AppColors.primary.withOpacity(0.15),
+                    ? AppColors.error.withValues(alpha: 0.15)
+                    : AppColors.primary.withValues(alpha: 0.15),
                 border: Border.all(
-                  color: widget.isRecording
-                      ? AppColors.error
-                      : AppColors.primary,
+                  color:
+                      widget.isRecording ? AppColors.error : AppColors.primary,
                   width: 3,
                 ),
                 boxShadow: [
@@ -286,7 +297,9 @@ class _RecordButtonState extends State<_RecordButton>
                     color: (widget.isRecording
                             ? AppColors.error
                             : AppColors.primary)
-                        .withOpacity(widget.isRecording ? _anim.value * 0.5 : 0.3),
+                        .withValues(
+                      alpha: widget.isRecording ? _anim.value * 0.5 : 0.3,
+                    ),
                     blurRadius: 30,
                     spreadRadius: 4,
                   ),
@@ -296,14 +309,22 @@ class _RecordButtonState extends State<_RecordButton>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    widget.isRecording ? Icons.stop : Icons.play_arrow,
+                    widget.isBusy
+                        ? Icons.hourglass_top
+                        : widget.isRecording
+                            ? Icons.stop
+                            : Icons.play_arrow,
                     size: 48,
                     color: widget.isRecording
                         ? AppColors.error
                         : AppColors.primary,
                   ),
                   Text(
-                    widget.isRecording ? 'STOP' : 'START',
+                    widget.isBusy
+                        ? 'WAIT'
+                        : widget.isRecording
+                            ? 'STOP'
+                            : 'START',
                     style: TextStyle(
                       color: widget.isRecording
                           ? AppColors.error
@@ -344,7 +365,7 @@ class _LiveStatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

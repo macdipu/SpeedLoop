@@ -1,4 +1,5 @@
 /// Map Speedometer Widget — current position on OpenStreetMap with speed overlay.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -62,8 +63,7 @@ class _MapSpeedometerWidgetState extends State<MapSpeedometerWidget> {
             ),
             children: [
               TileLayer(
-                urlTemplate:
-                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.chowdhuryelab.speedloop',
               ),
               MarkerLayer(
@@ -113,13 +113,13 @@ class _MapSpeedometerWidgetState extends State<MapSpeedometerWidget> {
             right: 0,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 decoration: BoxDecoration(
-                  color: context.cardColor.withOpacity(0.92),
+                  color: context.cardColor.withValues(alpha: 0.92),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                      color: context.primaryColor.withOpacity(0.3)),
+                      color: context.primaryColor.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

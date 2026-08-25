@@ -1,4 +1,5 @@
 /// HomeShell — Bottom navigation shell that hosts the main feature tabs.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

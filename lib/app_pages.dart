@@ -1,6 +1,7 @@
 /// GetX Route Configuration
 /// Defines app routes, pages, and dependency bindings.
 /// Architecture: each feature has its own Binding class for DI.
+library;
 
 import 'package:get/get.dart';
 

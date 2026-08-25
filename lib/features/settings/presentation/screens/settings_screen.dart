@@ -1,4 +1,5 @@
 /// SettingsScreen — configure speed unit, theme, language, and speed alerts.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -27,18 +28,14 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     _UnitChip(
                       label: 'km/h',
-                      selected:
-                          controller.speedUnit.value == SpeedUnit.kmh,
-                      onTap: () =>
-                          controller.setSpeedUnit(SpeedUnit.kmh),
+                      selected: controller.speedUnit.value == SpeedUnit.kmh,
+                      onTap: () => controller.setSpeedUnit(SpeedUnit.kmh),
                     ),
                     const SizedBox(width: 12),
                     _UnitChip(
                       label: 'mph',
-                      selected:
-                          controller.speedUnit.value == SpeedUnit.mph,
-                      onTap: () =>
-                          controller.setSpeedUnit(SpeedUnit.mph),
+                      selected: controller.speedUnit.value == SpeedUnit.mph,
+                      onTap: () => controller.setSpeedUnit(SpeedUnit.mph),
                     ),
                   ],
                 )),
@@ -57,7 +54,7 @@ class SettingsScreen extends StatelessWidget {
                     Switch(
                       value: controller.isDarkMode.value,
                       onChanged: (_) => controller.toggleTheme(),
-                      activeColor: context.primaryColor,
+                      activeThumbColor: context.primaryColor,
                     ),
                   ],
                 )),
@@ -79,8 +76,7 @@ class SettingsScreen extends StatelessWidget {
                           children: [
                             Text(
                               'enable_alert'.tr,
-                              style: TextStyle(
-                                  color: context.textPrimaryColor),
+                              style: TextStyle(color: context.textPrimaryColor),
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -96,34 +92,28 @@ class SettingsScreen extends StatelessWidget {
                         ),
                         Switch(
                           value: controller.speedAlertEnabled.value,
-                          onChanged: (_) =>
-                              controller.toggleSpeedAlert(),
-                          activeColor: AppColors.accent,
+                          onChanged: (_) => controller.toggleSpeedAlert(),
+                          activeThumbColor: AppColors.accent,
                         ),
                       ],
                     )),
-
                 const SizedBox(height: 16),
-
                 Obx(() {
-                  final isKmh =
-                      controller.speedUnit.value == SpeedUnit.kmh;
+                  final isKmh = controller.speedUnit.value == SpeedUnit.kmh;
                   final limitKmh = controller.speedLimitKmh.value;
                   final displayLimit =
                       isKmh ? limitKmh : GpsUtils.kmhToMph(limitKmh);
                   final unit = isKmh ? 'km/h' : 'mph';
                   final minVal = isKmh ? 20.0 : 10.0;
                   final maxVal = isKmh ? 200.0 : 125.0;
-                  final clamped =
-                      displayLimit.clamp(minVal, maxVal);
+                  final clamped = displayLimit.clamp(minVal, maxVal);
                   final enabled = controller.speedAlertEnabled.value;
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'speed_limit'.tr,
@@ -137,11 +127,10 @@ class SettingsScreen extends StatelessWidget {
                                 horizontal: 12, vertical: 4),
                             decoration: BoxDecoration(
                               color: enabled
-                                  ? AppColors.accent.withOpacity(0.15)
+                                  ? AppColors.accent.withValues(alpha: 0.15)
                                   : context.cardBorderColor
-                                      .withOpacity(0.5),
-                              borderRadius:
-                                  BorderRadius.circular(12),
+                                      .withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: enabled
                                     ? AppColors.accent
@@ -171,12 +160,11 @@ class SettingsScreen extends StatelessWidget {
                             ? AppColors.accent
                             : context.textDisabledColor,
                         inactiveColor:
-                            context.textDisabledColor.withOpacity(0.3),
+                            context.textDisabledColor.withValues(alpha: 0.3),
                         onChanged: enabled
                             ? (val) {
-                                final kmh = isKmh
-                                    ? val
-                                    : GpsUtils.mphToKmh(val);
+                                final kmh =
+                                    isKmh ? val : GpsUtils.mphToKmh(val);
                                 controller.setSpeedLimit(kmh);
                               }
                             : null,
@@ -208,10 +196,8 @@ class SettingsScreen extends StatelessWidget {
                       children: LoopDuration.values
                           .map((d) => _UnitChip(
                                 label: d.label,
-                                selected:
-                                    controller.loopDuration.value == d,
-                                onTap: () =>
-                                    controller.setLoopDuration(d),
+                                selected: controller.loopDuration.value == d,
+                                onTap: () => controller.setLoopDuration(d),
                               ))
                           .toList(),
                     ),
@@ -230,11 +216,10 @@ class SettingsScreen extends StatelessWidget {
                       .map((l) => _LanguageTile(
                             code: l['code'] as String,
                             label: l['label'] as String,
-                            selected:
-                                controller.locale.value.languageCode ==
-                                    l['code'],
-                            onTap: () => controller.setLocale(
-                                Locale(l['code'] as String)),
+                            selected: controller.locale.value.languageCode ==
+                                l['code'],
+                            onTap: () => controller
+                                .setLocale(Locale(l['code'] as String)),
                           ))
                       .toList(),
                 )),
@@ -245,8 +230,7 @@ class SettingsScreen extends StatelessWidget {
           Center(
             child: Column(
               children: [
-                Icon(Icons.speed,
-                    color: context.primaryColor, size: 40),
+                Icon(Icons.speed, color: context.primaryColor, size: 40),
                 const SizedBox(height: 8),
                 Text('SpeedLoop',
                     style: TextStyle(
@@ -256,8 +240,7 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text('v1.0.0  •  chowdhuryelab',
                     style: TextStyle(
-                        color: context.textDisabledColor,
-                        fontSize: 12)),
+                        color: context.textDisabledColor, fontSize: 12)),
               ],
             ),
           ),
@@ -313,17 +296,14 @@ class _UnitChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         decoration: BoxDecoration(
           color: selected
-              ? context.primaryColor.withOpacity(0.12)
+              ? context.primaryColor.withValues(alpha: 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected
-                ? context.primaryColor
-                : context.textDisabledColor,
+            color: selected ? context.primaryColor : context.textDisabledColor,
             width: 1.5,
           ),
         ),
@@ -354,22 +334,20 @@ class _LanguageTile extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: ListTile(
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      onTap: onTap,
-      leading: Text(code.toUpperCase(),
-          style: TextStyle(
-              color: context.textDisabledColor,
-              fontSize: 11,
-              fontFamily: 'monospace',
-              letterSpacing: 1)),
-      title: Text(label,
-          style: TextStyle(
-              color: context.textPrimaryColor, fontSize: 14)),
-      trailing: selected
-          ? Icon(Icons.check_circle,
-              color: context.primaryColor, size: 20)
-          : null,
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+        onTap: onTap,
+        leading: Text(code.toUpperCase(),
+            style: TextStyle(
+                color: context.textDisabledColor,
+                fontSize: 11,
+                fontFamily: 'monospace',
+                letterSpacing: 1)),
+        title: Text(label,
+            style: TextStyle(color: context.textPrimaryColor, fontSize: 14)),
+        trailing: selected
+            ? Icon(Icons.check_circle, color: context.primaryColor, size: 20)
+            : null,
       ),
     );
   }

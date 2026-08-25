@@ -1,6 +1,7 @@
 /// SpeedometerController — GetX Controller
 /// Manages real-time GPS speed tracking, unit switching, and session max-speed.
 /// Unit is kept in sync with SettingsController as the single source of truth.
+library;
 
 import 'dart:async';
 import 'package:get/get.dart';
@@ -69,12 +70,14 @@ class SpeedometerController extends GetxController {
     final settings = Get.find<SettingsController>();
 
     // Set initial unit from persisted settings
-    speedometer.value = speedometer.value.copyWith(unit: settings.speedUnit.value);
+    speedometer.value =
+        speedometer.value.copyWith(unit: settings.speedUnit.value);
 
     // React to unit changes (from Settings screen or Speedometer toggle)
     ever(settings.speedUnit, (SpeedUnit newUnit) {
       _sessionMaxSpeed = 0;
-      speedometer.value = speedometer.value.copyWith(unit: newUnit, maxSpeed: 0);
+      speedometer.value =
+          speedometer.value.copyWith(unit: newUnit, maxSpeed: 0);
     });
   }
 
@@ -100,7 +103,8 @@ class SpeedometerController extends GetxController {
 
   void _onPosition(Position pos) {
     final rawSpeed = GpsUtils.sanitizeSpeed(pos.speed); // m/s
-    final displaySpeed = GpsUtils.convertSpeed(rawSpeed, speedometer.value.unit);
+    final displaySpeed =
+        GpsUtils.convertSpeed(rawSpeed, speedometer.value.unit);
 
     if (displaySpeed > _sessionMaxSpeed) {
       _sessionMaxSpeed = displaySpeed;

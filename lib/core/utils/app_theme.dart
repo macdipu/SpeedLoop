@@ -1,5 +1,6 @@
 /// App Theme & Design System
 /// Centralizes all color tokens, typography, and adaptive theme helpers.
+library;
 
 import 'package:flutter/material.dart';
 
@@ -74,8 +75,7 @@ extension AppThemeX on BuildContext {
       isDark ? AppColors.textDisabled : AppColors.textDisabledOnLight;
 
   /// Resolved primary color — slightly darker in light mode for contrast.
-  Color get primaryColor =>
-      isDark ? AppColors.primary : AppColors.primaryDark;
+  Color get primaryColor => isDark ? AppColors.primary : AppColors.primaryDark;
 }
 
 // ---------------------------------------------------------------------------
@@ -119,13 +119,12 @@ class AppTheme {
         ),
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: AppColors.bgCard,
-          indicatorColor: AppColors.primary.withOpacity(0.15),
+          indicatorColor: AppColors.primary.withValues(alpha: 0.15),
           iconTheme: WidgetStateProperty.resolveWith((states) =>
               states.contains(WidgetState.selected)
                   ? const IconThemeData(color: AppColors.primary)
                   : const IconThemeData(color: AppColors.textSecondary)),
-          labelTextStyle: WidgetStateProperty.resolveWith((states) =>
-              TextStyle(
+          labelTextStyle: WidgetStateProperty.resolveWith((states) => TextStyle(
                 color: states.contains(WidgetState.selected)
                     ? AppColors.primary
                     : AppColors.textSecondary,
@@ -179,12 +178,11 @@ class AppTheme {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: AppColors.bgDark,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            textStyle: const TextStyle(
-                fontWeight: FontWeight.w700, fontSize: 15),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            textStyle:
+                const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
           ),
         ),
         switchTheme: SwitchThemeData(
@@ -194,15 +192,15 @@ class AppTheme {
                   : AppColors.textDisabled),
           trackColor: WidgetStateProperty.resolveWith((states) =>
               states.contains(WidgetState.selected)
-                  ? AppColors.primary.withOpacity(0.4)
+                  ? AppColors.primary.withValues(alpha: 0.4)
                   : AppColors.bgCardLight),
         ),
         sliderTheme: const SliderThemeData(
           activeTrackColor: AppColors.accent,
           thumbColor: AppColors.accent,
         ),
-        iconTheme: const IconThemeData(
-            color: AppColors.textSecondary, size: 24),
+        iconTheme:
+            const IconThemeData(color: AppColors.textSecondary, size: 24),
       );
 
   static ThemeData get lightTheme => ThemeData(
@@ -225,8 +223,7 @@ class AppTheme {
           color: AppColors.cardWhite,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(
-                color: AppColors.cardLightBorder, width: 1),
+            side: const BorderSide(color: AppColors.cardLightBorder, width: 1),
           ),
           elevation: 0,
           shadowColor: Colors.black12,
@@ -245,14 +242,12 @@ class AppTheme {
         ),
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: AppColors.cardWhite,
-          indicatorColor: AppColors.primaryDark.withOpacity(0.12),
+          indicatorColor: AppColors.primaryDark.withValues(alpha: 0.12),
           iconTheme: WidgetStateProperty.resolveWith((states) =>
               states.contains(WidgetState.selected)
                   ? const IconThemeData(color: AppColors.primaryDark)
-                  : const IconThemeData(
-                      color: AppColors.textSecondaryOnLight)),
-          labelTextStyle: WidgetStateProperty.resolveWith((states) =>
-              TextStyle(
+                  : const IconThemeData(color: AppColors.textSecondaryOnLight)),
+          labelTextStyle: WidgetStateProperty.resolveWith((states) => TextStyle(
                 color: states.contains(WidgetState.selected)
                     ? AppColors.primaryDark
                     : AppColors.textSecondaryOnLight,
@@ -294,8 +289,8 @@ class AppTheme {
             fontWeight: FontWeight.w600,
           ),
           bodyLarge: TextStyle(color: AppColors.textOnLight, fontSize: 16),
-          bodyMedium: TextStyle(
-              color: AppColors.textSecondaryOnLight, fontSize: 14),
+          bodyMedium:
+              TextStyle(color: AppColors.textSecondaryOnLight, fontSize: 14),
           labelLarge: TextStyle(
             color: AppColors.primaryDark,
             fontSize: 14,
@@ -307,12 +302,11 @@ class AppTheme {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryDark,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            textStyle: const TextStyle(
-                fontWeight: FontWeight.w700, fontSize: 15),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            textStyle:
+                const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
           ),
         ),
         switchTheme: SwitchThemeData(
@@ -322,7 +316,7 @@ class AppTheme {
                   : Colors.grey.shade400),
           trackColor: WidgetStateProperty.resolveWith((states) =>
               states.contains(WidgetState.selected)
-                  ? AppColors.primaryDark.withOpacity(0.35)
+                  ? AppColors.primaryDark.withValues(alpha: 0.35)
                   : Colors.grey.shade300),
         ),
         sliderTheme: const SliderThemeData(

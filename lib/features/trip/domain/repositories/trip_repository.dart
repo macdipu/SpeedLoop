@@ -1,9 +1,12 @@
 /// Trip Repository Interface (Domain Layer)
+library;
+
 import '../../domain/entities/trip_entity.dart';
 
 abstract class TripRepository {
   Future<int> startTrip(DateTime startTime, {String? title});
-  Future<void> stopTrip(int tripId, {
+  Future<void> stopTrip(
+    int tripId, {
     required double distanceMeters,
     required double avgSpeedKmh,
     required double maxSpeedKmh,

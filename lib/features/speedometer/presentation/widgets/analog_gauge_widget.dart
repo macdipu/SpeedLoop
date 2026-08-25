@@ -1,4 +1,5 @@
 /// Analog Gauge Widget — custom-painted speedometer needle gauge.
+library;
 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -127,8 +128,9 @@ class _GaugePainter extends CustomPainter {
 
     // Tick marks
     final tickPaint = Paint()
-      ..color = (isDark ? AppColors.textDisabled : AppColors.textDisabledOnLight)
-          .withOpacity(0.5)
+      ..color =
+          (isDark ? AppColors.textDisabled : AppColors.textDisabledOnLight)
+              .withValues(alpha: 0.5)
       ..strokeWidth = 1.5;
 
     for (int i = 0; i <= 10; i++) {

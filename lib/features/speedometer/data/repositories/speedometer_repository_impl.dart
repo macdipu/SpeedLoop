@@ -1,5 +1,6 @@
 /// Speedometer Repository Implementation (Data Layer)
 /// Wraps geolocator position stream.
+library;
 
 import 'package:geolocator/geolocator.dart';
 

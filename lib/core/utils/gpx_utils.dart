@@ -1,5 +1,6 @@
 /// GPX Utils
 /// Handles reading and writing standard GPX XML files.
+library;
 
 import 'dart:io';
 import 'package:xml/xml.dart';
@@ -10,15 +11,15 @@ class GpxUtils {
   static String generateGpx(TripEntity trip) {
     final builder = XmlBuilder();
     builder.processing('xml', 'version="1.0" encoding="UTF-8"');
-    
+
     builder.element('gpx', attributes: {
       'version': '1.1',
       'creator': 'SpeedLoop - Chowdhury eLab',
       'xmlns': 'http://www.topografix.com/GPX/1/1',
       'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-      'xsi:schemaLocation': 'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd',
+      'xsi:schemaLocation':
+          'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd',
     }, nest: () {
-      
       builder.element('metadata', nest: () {
         builder.element('time', nest: trip.startTime.toUtc().toIso8601String());
         builder.element('name', nest: trip.title ?? 'Recorded Trip');
@@ -33,15 +34,15 @@ class GpxUtils {
               'lon': point.longitude.toString(),
             }, nest: () {
               builder.element('ele', nest: point.altitude.toString());
-              builder.element('time', nest: point.timestamp.toUtc().toIso8601String());
+              builder.element('time',
+                  nest: point.timestamp.toUtc().toIso8601String());
               builder.element('extensions', nest: () {
-                 builder.element('speed_kmh', nest: point.speedKmh.toString());
+                builder.element('speed_kmh', nest: point.speedKmh.toString());
               });
             });
           }
         });
       });
-      
     });
 
     final doc = builder.buildDocument();
@@ -59,31 +60,39 @@ class GpxUtils {
 
       final points = <TripPointEntity>[];
       DateTime? startTime;
-      
+
       for (final pt in trkpts) {
         final latStr = pt.getAttribute('lat');
         final lonStr = pt.getAttribute('lon');
         if (latStr == null || lonStr == null) continue;
 
-        final lat = double.tryParse(latStr) ?? 0.0;
-        final lon = double.tryParse(lonStr) ?? 0.0;
-        
+        final lat = double.tryParse(latStr);
+        final lon = double.tryParse(lonStr);
+        if (lat == null ||
+            lon == null ||
+            !lat.isFinite ||
+            !lon.isFinite ||
+            lat.abs() > 90 ||
+            lon.abs() > 180) {
+          continue;
+        }
+
         // Elevation
         final eleNode = pt.findElements('ele');
-        final ele = eleNode.isNotEmpty 
-            ? double.tryParse(eleNode.first.innerText) ?? 0.0 
+        final ele = eleNode.isNotEmpty
+            ? double.tryParse(eleNode.first.innerText) ?? 0.0
             : 0.0;
-        
+
         // Time
         final timeNode = pt.findElements('time');
         DateTime time;
         if (timeNode.isNotEmpty) {
-           time = DateTime.parse(timeNode.first.innerText);
+          time = DateTime.tryParse(timeNode.first.innerText) ?? DateTime.now();
         } else {
-           time = DateTime.now(); // Fallback
+          time = DateTime.now(); // Fallback
         }
-        
-        if (startTime == null) startTime = time;
+
+        startTime ??= time;
 
         // Try getting extended speed if exported by this app
         double speed = 0.0;

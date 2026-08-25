@@ -4,17 +4,12 @@
     <!-- GPS permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <!-- Camera for dashcam feature -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-
-    <!-- Storage for GPX files -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
     <!-- Internet for OSM tiles -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -48,7 +43,8 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
     </activity>
-        <!-- Phase 6: Background Location Service (flutter_background_service) -->
+        <!-- Persistent trip recording worker. It is started only after the user
+             explicitly begins a trip and foregrounds itself immediately. -->
         <service
             android:name="id.flutter.flutter_background_service.BackgroundService"
             android:foregroundServiceType="location"

@@ -1,4 +1,5 @@
 /// Digital Speed Widget — large numeric display with animated speed bar.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

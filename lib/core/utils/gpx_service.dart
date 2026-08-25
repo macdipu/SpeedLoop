@@ -1,6 +1,7 @@
 /// GPX Service
 /// Handles import and export of GPX (GPS Exchange Format) files.
 /// Supports reading GPX track points and exporting trips as GPX.
+library;
 
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -41,27 +42,21 @@ class GpxService {
       'xmlns': 'http://www.topografix.com/GPX/1/1',
     }, nest: () {
       builder.element('metadata', nest: () {
-        builder.element('name',
-            nest: trip.title ?? 'Trip ${trip.id}');
-        builder.element('time',
-            nest: trip.startTime.toIso8601String());
+        builder.element('name', nest: trip.title ?? 'Trip ${trip.id}');
+        builder.element('time', nest: trip.startTime.toIso8601String());
       });
       builder.element('trk', nest: () {
-        builder.element('name',
-            nest: trip.title ?? 'Trip ${trip.id}');
+        builder.element('name', nest: trip.title ?? 'Trip ${trip.id}');
         builder.element('trkseg', nest: () {
           for (final point in trip.points) {
             builder.element('trkpt', attributes: {
               'lat': point.latitude.toString(),
               'lon': point.longitude.toString(),
             }, nest: () {
-              builder.element('ele',
-                  nest: point.altitude.toString());
-              builder.element('time',
-                  nest: point.timestamp.toIso8601String());
+              builder.element('ele', nest: point.altitude.toString());
+              builder.element('time', nest: point.timestamp.toIso8601String());
               builder.element('extensions', nest: () {
-                builder.element('speed',
-                    nest: point.speedKmh.toString());
+                builder.element('speed', nest: point.speedKmh.toString());
               });
             });
           }
@@ -93,8 +88,7 @@ class GpxService {
       final ele = double.tryParse(
               trkpt.findElements('ele').firstOrNull?.innerText ?? '') ??
           0.0;
-      final timeStr =
-          trkpt.findElements('time').firstOrNull?.innerText ?? '';
+      final timeStr = trkpt.findElements('time').firstOrNull?.innerText ?? '';
       final time = DateTime.tryParse(timeStr) ?? DateTime.now();
       final speedEl = trkpt.findAllElements('speed').firstOrNull;
       final speed = double.tryParse(speedEl?.innerText ?? '') ?? 0.0;

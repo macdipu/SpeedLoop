@@ -1,6 +1,7 @@
 /// HUD Overlay Widget — neon green speed overlay, designed to reflect in windshield.
 /// Full-screen black background with mirrored/flipped text for HUD projection.
 /// Phase 7: Shows a red warning indicator when speed limit is exceeded.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -66,14 +67,16 @@ class _HudOverlayWidgetState extends State<HudOverlayWidget>
           final alertEnabled = settings.speedAlertEnabled.value;
           final isOverLimit = alertEnabled && speedKmh > limitKmh;
           final unit = settings.speedUnit.value;
-          final limitDisplay = unit == SpeedUnit.kmh ? limitKmh : GpsUtils.kmhToMph(limitKmh);
+          final limitDisplay =
+              unit == SpeedUnit.kmh ? limitKmh : GpsUtils.kmhToMph(limitKmh);
           final unitLabel = unit == SpeedUnit.kmh ? 'km/h' : 'mph';
           return Stack(
             children: [
               Transform(
                 // Mirror horizontally for HUD windshield reflection
                 alignment: Alignment.center,
-                transform: Matrix4.identity()..scale(-1.0, 1.0),
+                transform: Matrix4.identity()
+                  ..scaleByDouble(-1.0, 1.0, 1.0, 1.0),
                 child: Stack(
                   children: [
                     // Main speed display
@@ -85,7 +88,9 @@ class _HudOverlayWidgetState extends State<HudOverlayWidget>
                           Text(
                             s.displaySpeed.toStringAsFixed(0),
                             style: TextStyle(
-                              color: isOverLimit ? AppColors.error : AppColors.hudGreen,
+                              color: isOverLimit
+                                  ? AppColors.error
+                                  : AppColors.hudGreen,
                               fontSize: 120,
                               fontWeight: FontWeight.w900,
                               shadows: [
@@ -102,7 +107,9 @@ class _HudOverlayWidgetState extends State<HudOverlayWidget>
                           Text(
                             s.unitLabel.toUpperCase(),
                             style: TextStyle(
-                              color: isOverLimit ? AppColors.error : AppColors.hudGreen,
+                              color: isOverLimit
+                                  ? AppColors.error
+                                  : AppColors.hudGreen,
                               fontSize: 28,
                               letterSpacing: 12,
                               shadows: [
@@ -123,14 +130,16 @@ class _HudOverlayWidgetState extends State<HudOverlayWidget>
                             children: [
                               Icon(
                                 Icons.navigation,
-                                color: AppColors.hudGreen.withOpacity(0.6),
+                                color:
+                                    AppColors.hudGreen.withValues(alpha: 0.6),
                                 size: 16,
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 '${s.heading.toStringAsFixed(0)}°',
                                 style: TextStyle(
-                                  color: AppColors.hudGreen.withOpacity(0.6),
+                                  color:
+                                      AppColors.hudGreen.withValues(alpha: 0.6),
                                   fontSize: 18,
                                   letterSpacing: 4,
                                 ),
@@ -138,14 +147,16 @@ class _HudOverlayWidgetState extends State<HudOverlayWidget>
                               const SizedBox(width: 20),
                               Icon(
                                 Icons.terrain,
-                                color: AppColors.hudGreen.withOpacity(0.6),
+                                color:
+                                    AppColors.hudGreen.withValues(alpha: 0.6),
                                 size: 16,
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 '${s.altitude.toStringAsFixed(0)}m',
                                 style: TextStyle(
-                                  color: AppColors.hudGreen.withOpacity(0.6),
+                                  color:
+                                      AppColors.hudGreen.withValues(alpha: 0.6),
                                   fontSize: 18,
                                   letterSpacing: 4,
                                 ),
@@ -169,7 +180,7 @@ class _HudOverlayWidgetState extends State<HudOverlayWidget>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 14, vertical: 8),
                               decoration: BoxDecoration(
-                                color: AppColors.error.withOpacity(0.2),
+                                color: AppColors.error.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: AppColors.error,
@@ -184,7 +195,8 @@ class _HudOverlayWidgetState extends State<HudOverlayWidget>
                                   const SizedBox(width: 6),
                                   Column(
                                     mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'OVER LIMIT',
@@ -224,14 +236,17 @@ class _HudOverlayWidgetState extends State<HudOverlayWidget>
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () => widget.controller.setMode(SpeedometerMode.digital),
+                      onTap: () =>
+                          widget.controller.setMode(SpeedometerMode.digital),
                       borderRadius: BorderRadius.circular(30),
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withValues(alpha: 0.5),
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.hudGreen.withOpacity(0.5)),
+                          border: Border.all(
+                            color: AppColors.hudGreen.withValues(alpha: 0.5),
+                          ),
                         ),
                         child: const Icon(
                           Icons.close,

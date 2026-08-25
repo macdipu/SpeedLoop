@@ -28,12 +28,18 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>SpeedLoop uses the camera for the dashcam speed overlay feature.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>SpeedLoop records audio only while you explicitly record a dashcam clip.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>SpeedLoop needs background location to record trips while the app is in the background.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>SpeedLoop needs always-on location for background trip recording.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SpeedLoop needs location access to track your speed and record trips.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

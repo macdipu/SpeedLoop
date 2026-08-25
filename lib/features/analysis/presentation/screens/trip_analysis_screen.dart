@@ -1,4 +1,5 @@
 /// TripAnalysisScreen — shows acceleration stats, top speed, and segment breakdown.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -103,9 +104,7 @@ class _TripAnalysisScreenState extends State<TripAnalysisScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 28),
-
               _SectionHeader('acceleration'.tr),
               const SizedBox(height: 12),
               _AccelerationCard(
@@ -117,9 +116,7 @@ class _TripAnalysisScreenState extends State<TripAnalysisScreen> {
                 label: acc100Label,
                 event: result.acceleration0to100,
               ),
-
               const SizedBox(height: 28),
-
               if (result.segments.isNotEmpty) ...[
                 _SectionHeader('segment_breakdown'.tr),
                 const SizedBox(height: 12),
@@ -178,7 +175,7 @@ class _AnalysisCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,8 +224,8 @@ class _AccelerationCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(label,
-                style: TextStyle(
-                    color: context.textPrimaryColor, fontSize: 15)),
+                style:
+                    TextStyle(color: context.textPrimaryColor, fontSize: 15)),
           ),
           event != null
               ? Text(
@@ -273,7 +270,7 @@ class _SegmentRow extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-                color: context.primaryColor.withOpacity(0.15),
+                color: context.primaryColor.withValues(alpha: 0.15),
                 shape: BoxShape.circle),
             child: Center(
               child: Text('$number',
@@ -287,8 +284,7 @@ class _SegmentRow extends StatelessWidget {
           Expanded(
             child: Text(
               avgLabel,
-              style: TextStyle(
-                  color: context.textSecondaryColor, fontSize: 13),
+              style: TextStyle(color: context.textSecondaryColor, fontSize: 13),
             ),
           ),
           Text(

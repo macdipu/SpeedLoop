@@ -3,6 +3,7 @@
 ///   - Speed unit conversion (m/s → km/h, mph)
 ///   - Haversine distance calculation
 ///   - Position stream configuration
+library;
 
 import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
@@ -100,8 +101,7 @@ class GpsUtils {
   // --------------------------------------------------------------------------
 
   /// Returns a safe speed value (0.0 if negative from GPS noise).
-  static double sanitizeSpeed(double speedMs) =>
-      speedMs < 0 ? 0.0 : speedMs;
+  static double sanitizeSpeed(double speedMs) => speedMs < 0 ? 0.0 : speedMs;
 
   /// Calculates bearing between two points in degrees (0-360).
   static double bearing(double lat1, double lon1, double lat2, double lon2) {

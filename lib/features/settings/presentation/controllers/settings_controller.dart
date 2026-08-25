@@ -1,6 +1,7 @@
 /// SettingsController — GetX Controller
 /// Manages user preferences: speed unit, theme, language, speed alerts, loop recording.
 /// Persists settings using Shared Preferences.
+library;
 
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -75,8 +76,8 @@ class SettingsController extends GetxController {
     speedLimitKmh.value = _prefs.getDouble('speedLimitKmh') ?? 120.0;
 
     final loopIndex = _prefs.getInt('loopDuration') ?? 0;
-    loopDuration.value = LoopDuration.values[loopIndex.clamp(
-        0, LoopDuration.values.length - 1)];
+    loopDuration.value =
+        LoopDuration.values[loopIndex.clamp(0, LoopDuration.values.length - 1)];
   }
 
   // --------------------------------------------------------------------------

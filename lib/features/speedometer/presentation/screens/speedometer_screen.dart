@@ -1,6 +1,7 @@
 /// SpeedometerScreen
 /// The main speedometer UI with tab-based switching between:
 /// Digital, Analog, HUD, and Map modes.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -152,13 +153,11 @@ class _ModeTabs extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: isActive
-                      ? context.primaryColor.withOpacity(0.12)
+                      ? context.primaryColor.withValues(alpha: 0.12)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isActive
-                        ? context.primaryColor
-                        : Colors.transparent,
+                    color: isActive ? context.primaryColor : Colors.transparent,
                     width: 1.5,
                   ),
                 ),
@@ -260,14 +259,11 @@ class _StatItem extends StatelessWidget {
               TextSpan(
                   text: value,
                   style: TextStyle(
-                      color: color,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700)),
+                      color: color, fontSize: 22, fontWeight: FontWeight.w700)),
               TextSpan(
                   text: ' $unit',
                   style: TextStyle(
-                      color: context.textSecondaryColor,
-                      fontSize: 12)),
+                      color: context.textSecondaryColor, fontSize: 12)),
             ],
           ),
         ),

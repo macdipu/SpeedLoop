@@ -1,5 +1,6 @@
 /// Speedometer Feature — Domain Layer
 /// Entity representing the current speedometer state.
+library;
 
 import '../../../../../../core/utils/gps_utils.dart';
 

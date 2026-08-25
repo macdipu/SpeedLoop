@@ -1,337 +1,353 @@
-/// DashcamController
-/// Manages camera lifecycle, loop video recording, per-clip countdown,
-/// locked-clip protection, and storage quota enforcement.
-
 import 'dart:async';
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../../../../features/settings/presentation/controllers/settings_controller.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../../trip/presentation/controllers/trip_controller.dart';
+import '../../data/dashcam_camera_driver.dart';
+import '../../data/dashcam_clip_repository.dart';
 
-class DashcamController extends GetxController {
-  // ── Camera ─────────────────────────────────────────────────────────────────
-  CameraController? cameraController;
+class DashcamController extends GetxController with WidgetsBindingObserver {
+  DashcamController({
+    DashcamCameraDriver? cameraDriver,
+    DashcamClipRepository? clipRepository,
+    Future<Directory> Function()? directoryProvider,
+    SettingsController? settingsController,
+    TripController? injectedTripController,
+  })  : _camera = cameraDriver ?? PluginDashcamCameraDriver(),
+        _clipRepository = clipRepository ?? DriftDashcamClipRepository(),
+        _directoryProvider = directoryProvider ?? _defaultDirectoryProvider,
+        _injectedSettings = settingsController,
+        _injectedTripController = injectedTripController {
+    _storage = DashcamStorageManager(repository: _clipRepository);
+  }
+
+  static const int maxStorageBytes = 500 * 1024 * 1024;
+  static const int safeContinuousSegmentSeconds = 60;
+
+  final DashcamCameraDriver _camera;
+  final DashcamClipRepository _clipRepository;
+  final Future<Directory> Function() _directoryProvider;
+  final SettingsController? _injectedSettings;
+  final TripController? _injectedTripController;
+  late final DashcamStorageManager _storage;
+
+  CameraController? get cameraController => _camera.previewController;
+  SettingsController get _settings =>
+      _injectedSettings ?? Get.find<SettingsController>();
+  TripController get tripController =>
+      _injectedTripController ?? Get.find<TripController>();
+
   final isInitialized = false.obs;
   final isRecording = false.obs;
-
-  // ── Recording counters ─────────────────────────────────────────────────────
+  final isFinalizing = false.obs;
+  final isStorageFull = false.obs;
+  final lastError = RxnString();
   final totalElapsedSeconds = 0.obs;
   final clipElapsedSeconds = 0.obs;
-
-  /// Duration of each loop clip in seconds. 0 = no loop (single continuous).
   final clipTotalSeconds = 0.obs;
-
-  /// Number of completed segments saved this session.
   final segmentCount = 0.obs;
-
-  // ── Storage & camera info ───────────────────────────────────────────────────
   final storageMbUsed = 0.0.obs;
   final resolutionLabel = '1080p'.obs;
-
-  // ── Clip lock ──────────────────────────────────────────────────────────────
-  /// True when the user wants the current clip saved as locked (not auto-deleted).
   final isCurrentClipLocked = false.obs;
-
-  /// Brief flag set during the stop → restart transition.
   final isSwitchingClip = false.obs;
 
-  // ── Internal ───────────────────────────────────────────────────────────────
   Timer? _uiTimer;
   Timer? _cycleTimer;
   DateTime? _recordingStart;
   DateTime? _clipStart;
-
-  /// True when dashcam started the GPS trip — so it owns the stop call.
   bool _ownsTripRecording = false;
-
-  /// Paths of clips the user has locked — excluded from quota deletion.
-  final Set<String> _lockedFiles = {};
-
-  // ── Dependencies ───────────────────────────────────────────────────────────
-  SettingsController get _settings => Get.find<SettingsController>();
-
-  TripController get tripController => Get.find<TripController>();
-
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
+  Future<void>? _finalizationFuture;
+  Future<void>? _cycleFuture;
+  bool _cameraDisposed = false;
 
   @override
   void onInit() {
     super.onInit();
-    _initCamera();
+    WidgetsBinding.instance.addObserver(this);
+    unawaited(_initialize());
   }
 
   @override
   void onClose() {
-    _stopAll();
-    cameraController?.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    // GetX lifecycle callbacks are synchronous. The shared shutdown future owns
+    // ordering and disposes the camera only after any clip is finalized.
+    unawaited(shutdown());
     super.onClose();
   }
 
-  // ── Camera initialisation ──────────────────────────────────────────────────
-
-  Future<void> _initCamera() async {
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) return;
-
-      final back = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
-      );
-
-      cameraController = CameraController(
-        back,
-        ResolutionPreset.high,
-        enableAudio: true,
-      );
-      await cameraController!.initialize();
-
-      final size = cameraController!.value.previewSize;
-      if (size != null) {
-        final h = math.max(size.width, size.height).toInt();
-        resolutionLabel.value = _resLabel(h);
-      }
-
-      isInitialized.value = true;
-    } catch (e) {
-      Get.snackbar(
-        'Camera Error',
-        'Could not initialize camera',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+        if (isRecording.value) unawaited(finalizeRecording());
+        break;
+      case AppLifecycleState.detached:
+        unawaited(shutdown());
+        break;
+      case AppLifecycleState.resumed:
+        // Privacy stops are never automatically restarted.
+        break;
     }
   }
 
-  // ── Public API ─────────────────────────────────────────────────────────────
-
-  Future<void> toggleRecording() async {
-    if (!isInitialized.value) return;
-    isRecording.value ? await _stopAll() : await _startRecording();
+  Future<void> _initialize() async {
+    try {
+      final directory = await _directoryProvider();
+      await _storage.reconcile(directory);
+      await _refreshStorage(directory);
+      await _camera.initialize();
+      _cameraDisposed = false;
+      final dimension = _camera.maxPreviewDimension;
+      if (dimension != null) resolutionLabel.value = _resLabel(dimension);
+      isInitialized.value = true;
+    } catch (error) {
+      _setError('Could not initialize camera: $error');
+    }
   }
 
-  /// Toggles locked status for the clip currently being recorded.
+  Future<void> toggleRecording() async {
+    if (!isInitialized.value || isFinalizing.value) return;
+    if (isRecording.value) {
+      await finalizeRecording();
+    } else {
+      await _startRecording();
+    }
+  }
+
   void toggleLock() {
+    if (!isRecording.value) return;
     isCurrentClipLocked.value = !isCurrentClipLocked.value;
   }
 
-  // ── Recording start / stop ─────────────────────────────────────────────────
+  Future<void> setClipLocked(String path, bool locked) async {
+    await _clipRepository.setLocked(path, locked);
+  }
 
   Future<void> _startRecording() async {
-    if (cameraController == null) return;
+    final existingFinalization = _finalizationFuture;
+    if (existingFinalization != null) await existingFinalization;
+    final directory = await _directoryProvider();
+    final quota = await _storage.enforceQuota(
+      directory: directory,
+      maxBytes: maxStorageBytes,
+    );
+    await _applyStorageResult(quota);
+    if (!quota.canRecord) {
+      isStorageFull.value = true;
+      _setError(
+          'Locked dashcam clips fill the storage budget. Unlock or remove a clip to continue.');
+      return;
+    }
+
     try {
-      final loop = _settings.loopDuration.value;
-      clipTotalSeconds.value = loop.minutes * 60;
+      // Start any linked trip before opening the camera recording. Permission
+      // dialogs can make the app inactive; opening them after camera start
+      // would race the privacy lifecycle finalizer.
+      if (!tripController.isRecording.value) {
+        await tripController.startTrip();
+        _ownsTripRecording = tripController.isRecording.value;
+      }
 
-      await _manageStorageQuota();
-      await cameraController!.startVideoRecording();
-
-      _recordingStart = DateTime.now();
-      _clipStart = _recordingStart;
+      final selectedSeconds = _settings.loopDuration.value.minutes * 60;
+      // Even when the UI setting is "Off", physical files are bounded so a
+      // single recording cannot grow indefinitely and bypass the quota.
+      clipTotalSeconds.value =
+          selectedSeconds > 0 ? selectedSeconds : safeContinuousSegmentSeconds;
+      await _camera.startRecording();
+      final now = DateTime.now();
+      _recordingStart = now;
+      _clipStart = now;
       totalElapsedSeconds.value = 0;
       clipElapsedSeconds.value = 0;
       segmentCount.value = 0;
       isCurrentClipLocked.value = false;
       isSwitchingClip.value = false;
+      isStorageFull.value = false;
+      lastError.value = null;
       isRecording.value = true;
-
       _startUiTimer();
-      if (clipTotalSeconds.value > 0) {
-        _scheduleCycleTimer(clipTotalSeconds.value);
-      }
-
-      unawaited(_updateStorageUsed());
-
-      // Start GPS trip recording if nothing already in progress.
-      if (!tripController.isRecording.value) {
-        try {
-          await tripController.startTrip();
-          _ownsTripRecording = true;
-        } catch (_) {
-          _ownsTripRecording = false;
-        }
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to start recording',
-          snackPosition: SnackPosition.BOTTOM);
+      _scheduleCycleTimer(clipTotalSeconds.value);
+    } catch (error) {
+      _setError('Failed to start recording: $error');
+      await finalizeRecording();
     }
   }
 
-  Future<void> _stopAll() async {
+  Future<void> finalizeRecording() {
+    final existing = _finalizationFuture;
+    if (existing != null) return existing;
+    final future = _finalizeRecordingInternal();
+    _finalizationFuture = future;
+    return future.whenComplete(() => _finalizationFuture = null);
+  }
+
+  Future<void> _finalizeRecordingInternal() async {
+    isFinalizing.value = true;
     isRecording.value = false;
     _uiTimer?.cancel();
     _cycleTimer?.cancel();
     _uiTimer = null;
     _cycleTimer = null;
-
-    if (cameraController?.value.isRecordingVideo ?? false) {
-      try {
-        final file = await cameraController!.stopVideoRecording();
+    try {
+      await _cycleFuture;
+      if (_camera.isRecording) {
+        final file = await _camera.stopRecording();
         await _saveChunk(file, locked: isCurrentClipLocked.value);
-      } catch (_) {}
-    }
-
-    isCurrentClipLocked.value = false;
-    isSwitchingClip.value = false;
-    unawaited(_updateStorageUsed());
-
-    // Stop GPS trip recording only if dashcam started it.
-    if (_ownsTripRecording && tripController.isRecording.value) {
-      try {
+      }
+      final directory = await _directoryProvider();
+      final result = await _storage.enforceQuota(
+        directory: directory,
+        maxBytes: maxStorageBytes,
+      );
+      await _applyStorageResult(result);
+    } catch (error) {
+      _setError('Could not safely finalize the dashcam clip: $error');
+    } finally {
+      isCurrentClipLocked.value = false;
+      isSwitchingClip.value = false;
+      if (_ownsTripRecording && tripController.isRecording.value) {
         await tripController.stopTrip();
-      } catch (_) {}
+      }
       _ownsTripRecording = false;
+      isFinalizing.value = false;
     }
   }
 
-  // ── Clip cycling ───────────────────────────────────────────────────────────
+  Future<void> shutdown() async {
+    await finalizeRecording();
+    if (_cameraDisposed) return;
+    _cameraDisposed = true;
+    isInitialized.value = false;
+    await _camera.dispose();
+  }
 
   void _scheduleCycleTimer(int seconds) {
     _cycleTimer?.cancel();
-    _cycleTimer = Timer(Duration(seconds: seconds), _cycleClip);
+    _cycleTimer = Timer(Duration(seconds: seconds), () {
+      if (_cycleFuture != null) return;
+      final future = _cycleClip();
+      _cycleFuture = future;
+      unawaited(future.whenComplete(() => _cycleFuture = null));
+    });
   }
 
   Future<void> _cycleClip() async {
-    if (!isRecording.value || cameraController == null) return;
+    if (!isRecording.value || !_camera.isRecording) return;
     isSwitchingClip.value = true;
-
     try {
-      final locked = isCurrentClipLocked.value;
-
-      // Stop current clip and save
-      final file = await cameraController!.stopVideoRecording();
-      await _saveChunk(file, locked: locked);
-      unawaited(_manageStorageQuota());
-
-      // Start next clip immediately
-      await cameraController!.startVideoRecording();
-
+      final file = await _camera.stopRecording();
+      await _saveChunk(file, locked: isCurrentClipLocked.value);
+      final directory = await _directoryProvider();
+      final result = await _storage.enforceQuota(
+        directory: directory,
+        maxBytes: maxStorageBytes,
+      );
+      await _applyStorageResult(result);
+      if (!result.canRecord) {
+        isStorageFull.value = true;
+        isRecording.value = false;
+        _uiTimer?.cancel();
+        _setError(
+            'Recording stopped because locked clips fill the storage budget.');
+        if (_ownsTripRecording && tripController.isRecording.value) {
+          await tripController.stopTrip();
+          _ownsTripRecording = false;
+        }
+        return;
+      }
+      if (!isRecording.value) return;
+      await _camera.startRecording();
       _clipStart = DateTime.now();
       clipElapsedSeconds.value = 0;
       isCurrentClipLocked.value = false;
       segmentCount.value++;
-
       _showSegmentToast();
-
-      if (clipTotalSeconds.value > 0) {
-        _scheduleCycleTimer(clipTotalSeconds.value);
-      }
-    } catch (e) {
-      // Try to recover recording after a cycle failure.
-      try {
-        if (!(cameraController?.value.isRecordingVideo ?? false)) {
-          await cameraController!.startVideoRecording();
-          _clipStart = DateTime.now();
-          clipElapsedSeconds.value = 0;
-          if (clipTotalSeconds.value > 0) {
-            _scheduleCycleTimer(clipTotalSeconds.value);
-          }
-        }
-      } catch (_) {
-        isRecording.value = false;
-        _uiTimer?.cancel();
-      }
+      _scheduleCycleTimer(clipTotalSeconds.value);
+    } catch (error) {
+      isRecording.value = false;
+      _uiTimer?.cancel();
+      _setError('Dashcam segment transition failed: $error');
     } finally {
       isSwitchingClip.value = false;
     }
   }
 
+  Future<void> _saveChunk(XFile source, {required bool locked}) async {
+    final directory = await _directoryProvider();
+    final now = DateTime.now();
+    final name = 'VID_${now.microsecondsSinceEpoch}.mp4';
+    final destination = '${directory.path}/$name';
+    final saved = await File(source.path).rename(destination);
+    await _clipRepository.upsert(
+      DashcamClipMetadata(
+        path: destination,
+        createdAt: now,
+        isLocked: locked,
+        sizeBytes: await saved.length(),
+      ),
+    );
+  }
+
+  Future<void> _applyStorageResult(DashcamStorageResult result) async {
+    storageMbUsed.value = result.totalBytes / (1024 * 1024);
+    isStorageFull.value = !result.canRecord;
+  }
+
+  Future<void> _refreshStorage(Directory directory) async {
+    final result = await _storage.enforceQuota(
+      directory: directory,
+      maxBytes: maxStorageBytes,
+    );
+    await _applyStorageResult(result);
+  }
+
+  void _startUiTimer() {
+    _uiTimer?.cancel();
+    _uiTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final recordingStart = _recordingStart;
+      final clipStart = _clipStart;
+      if (recordingStart != null) {
+        totalElapsedSeconds.value =
+            DateTime.now().difference(recordingStart).inSeconds;
+      }
+      if (clipStart != null) {
+        clipElapsedSeconds.value =
+            DateTime.now().difference(clipStart).inSeconds;
+      }
+    });
+  }
+
   void _showSegmentToast() {
+    if (Get.context == null) return;
     Get.rawSnackbar(
       message: 'new_segment_started'.tr,
       duration: const Duration(seconds: 2),
       snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.black87,
-      messageText: Row(children: [
-        const Icon(Icons.fiber_manual_record, color: Colors.red, size: 12),
-        const SizedBox(width: 8),
-        Text(
-          'new_segment_started'.tr,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-        ),
-      ]),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      margin: const EdgeInsets.all(8),
-      borderRadius: 10,
     );
   }
 
-  // ── 1-second UI ticker ─────────────────────────────────────────────────────
-
-  void _startUiTimer() {
-    _uiTimer?.cancel();
-    _uiTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_recordingStart != null) {
-        totalElapsedSeconds.value =
-            DateTime.now().difference(_recordingStart!).inSeconds;
-      }
-      if (_clipStart != null) {
-        clipElapsedSeconds.value =
-            DateTime.now().difference(_clipStart!).inSeconds;
-      }
-    });
+  void _setError(String message) {
+    lastError.value = message;
+    if (Get.context != null) {
+      Get.snackbar('Dashcam', message, snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
-  // ── File management ────────────────────────────────────────────────────────
-
-  Future<void> _saveChunk(XFile file, {required bool locked}) async {
-    final dir = await _getDashcamDir();
-    final ts = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-    final name = 'VID_$ts.mp4';
-    final dest = '${dir.path}/$name';
-    await File(file.path).rename(dest);
-    if (locked) _lockedFiles.add(dest);
-  }
-
-  Future<Directory> _getDashcamDir() async {
+  static Future<Directory> _defaultDirectoryProvider() async {
     final root = await getApplicationDocumentsDirectory();
-    final dir = Directory('${root.path}/dashcam');
-    if (!await dir.exists()) await dir.create(recursive: true);
-    return dir;
+    final directory = Directory('${root.path}/dashcam');
+    if (!await directory.exists()) await directory.create(recursive: true);
+    return directory;
   }
-
-  Future<void> _manageStorageQuota() async {
-    final dir = await _getDashcamDir();
-
-    // Collect all files and their sizes
-    final allFiles = dir.listSync().whereType<File>().toList();
-    int total = 0;
-    for (final f in allFiles) {
-      total += f.lengthSync();
-    }
-
-    // Only consider unlocked files as deletion candidates
-    final unlocked = allFiles
-        .where((f) => !_lockedFiles.contains(f.path))
-        .toList()
-      ..sort((a, b) => a.lastModifiedSync().compareTo(b.lastModifiedSync()));
-
-    const maxBytes = 500 * 1024 * 1024; // 500 MB hard cap
-    while (total > maxBytes && unlocked.isNotEmpty) {
-      final oldest = unlocked.removeAt(0);
-      total -= oldest.lengthSync();
-      await oldest.delete();
-    }
-  }
-
-  Future<void> _updateStorageUsed() async {
-    try {
-      final dir = await _getDashcamDir();
-      int total = 0;
-      for (final f in dir.listSync().whereType<File>()) {
-        total += f.lengthSync();
-      }
-      storageMbUsed.value = total / (1024 * 1024);
-    } catch (_) {}
-  }
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
 
   static String _resLabel(int maxDimension) {
     if (maxDimension >= 2160) return '4K';
@@ -341,11 +357,9 @@ class DashcamController extends GetxController {
     return '480p';
   }
 
-  /// Formats seconds as MM:SS.
   static String formatClock(int totalSecs) {
-    final m = (totalSecs ~/ 60).toString().padLeft(2, '0');
-    final s = (totalSecs % 60).toString().padLeft(2, '0');
-    return '$m:$s';
+    final minutes = (totalSecs ~/ 60).toString().padLeft(2, '0');
+    final seconds = (totalSecs % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 }
-

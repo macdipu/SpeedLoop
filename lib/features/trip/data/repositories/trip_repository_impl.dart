@@ -1,5 +1,6 @@
 /// Trip Repository Implementation (Data Layer)
 /// Uses Drift DAOs for local persistence.
+library;
 
 import 'package:drift/drift.dart' as drift;
 import 'package:get/get.dart';
@@ -9,8 +10,7 @@ import '../../domain/entities/trip_entity.dart';
 import '../../domain/repositories/trip_repository.dart';
 
 class TripRepositoryImpl implements TripRepository {
-  TripRepositoryImpl()
-      : _db = Get.find<AppDatabase>();
+  TripRepositoryImpl() : _db = Get.find<AppDatabase>();
 
   final AppDatabase _db;
   TripDao get _tripDao => _db.tripDao;
@@ -67,15 +67,17 @@ class TripRepositoryImpl implements TripRepository {
       durationSeconds: drift.Value(trip.durationSeconds),
     ));
 
-    final companions = trip.points.map((p) => TripPointsTableCompanion.insert(
-      tripId: tripId,
-      latitude: p.latitude,
-      longitude: p.longitude,
-      speed: drift.Value(p.speedKmh),
-      accuracy: drift.Value(p.accuracy),
-      altitude: drift.Value(p.altitude),
-      timestamp: p.timestamp,
-    )).toList();
+    final companions = trip.points
+        .map((p) => TripPointsTableCompanion.insert(
+              tripId: tripId,
+              latitude: p.latitude,
+              longitude: p.longitude,
+              speed: drift.Value(p.speedKmh),
+              accuracy: drift.Value(p.accuracy),
+              altitude: drift.Value(p.altitude),
+              timestamp: p.timestamp,
+            ))
+        .toList();
 
     await _pointDao.insertPoints(companions);
   }
@@ -87,9 +89,9 @@ class TripRepositoryImpl implements TripRepository {
   }
 
   @override
-  Stream<List<TripEntity>> watchAllTrips() =>
-      _tripDao.watchAllTrips().map((rows) =>
-          rows.map((r) => TripEntity.fromDb(r)).toList());
+  Stream<List<TripEntity>> watchAllTrips() => _tripDao
+      .watchAllTrips()
+      .map((rows) => rows.map((r) => TripEntity.fromDb(r)).toList());
 
   @override
   Future<TripEntity?> getTripById(int id) async {
