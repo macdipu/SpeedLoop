@@ -74,15 +74,20 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async => m.createAll(),
         onUpgrade: (m, from, to) async {
-          if (from < 2) await m.createTable(dashcamClipsTable);
-          if (from < 3) {
-            await m.addColumn(dashcamClipsTable, dashcamClipsTable.tripId);
-          }
-          if (from < 4) {
-            await m.addColumn(
-              dashcamClipsTable,
-              dashcamClipsTable.incidentType,
-            );
+          if (from < 2) {
+            // createTable uses the current table definition, so its newer
+            // columns must not be added again below.
+            await m.createTable(dashcamClipsTable);
+          } else {
+            if (from < 3) {
+              await m.addColumn(dashcamClipsTable, dashcamClipsTable.tripId);
+            }
+            if (from < 4) {
+              await m.addColumn(
+                dashcamClipsTable,
+                dashcamClipsTable.incidentType,
+              );
+            }
           }
         },
       );
@@ -216,8 +221,15 @@ class DashcamClipDao extends DatabaseAccessor<AppDatabase>
     return counts;
   }
 
-  Future<void> upsertClip(DashcamClipsTableCompanion clip) =>
-      into(dashcamClipsTable).insertOnConflictUpdate(clip);
+  Future<void> upsertClip(DashcamClipsTableCompanion clip) async {
+    await into(dashcamClipsTable).insert(
+      clip,
+      onConflict: DoUpdate(
+        (_) => clip,
+        target: [dashcamClipsTable.path],
+      ),
+    );
+  }
 
   Future<int> setLocked(String path, bool locked) =>
       (update(dashcamClipsTable)..where((clip) => clip.path.equals(path)))

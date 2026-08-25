@@ -890,9 +890,15 @@ class $DashcamClipsTableTable extends DashcamClipsTable
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
+  static const VerificationMeta _incidentTypeMeta =
+      const VerificationMeta('incidentType');
+  @override
+  late final GeneratedColumn<String> incidentType = GeneratedColumn<String>(
+      'incident_type', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, tripId, path, createdAt, isLocked, sizeBytes];
+      [id, tripId, path, createdAt, isLocked, sizeBytes, incidentType];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -931,6 +937,12 @@ class $DashcamClipsTableTable extends DashcamClipsTable
       context.handle(_sizeBytesMeta,
           sizeBytes.isAcceptableOrUnknown(data['size_bytes']!, _sizeBytesMeta));
     }
+    if (data.containsKey('incident_type')) {
+      context.handle(
+          _incidentTypeMeta,
+          incidentType.isAcceptableOrUnknown(
+              data['incident_type']!, _incidentTypeMeta));
+    }
     return context;
   }
 
@@ -952,6 +964,8 @@ class $DashcamClipsTableTable extends DashcamClipsTable
           .read(DriftSqlType.bool, data['${effectivePrefix}is_locked'])!,
       sizeBytes: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}size_bytes'])!,
+      incidentType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}incident_type']),
     );
   }
 
@@ -969,13 +983,15 @@ class DashcamClipsTableData extends DataClass
   final DateTime createdAt;
   final bool isLocked;
   final int sizeBytes;
+  final String? incidentType;
   const DashcamClipsTableData(
       {required this.id,
       this.tripId,
       required this.path,
       required this.createdAt,
       required this.isLocked,
-      required this.sizeBytes});
+      required this.sizeBytes,
+      this.incidentType});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -987,6 +1003,9 @@ class DashcamClipsTableData extends DataClass
     map['created_at'] = Variable<DateTime>(createdAt);
     map['is_locked'] = Variable<bool>(isLocked);
     map['size_bytes'] = Variable<int>(sizeBytes);
+    if (!nullToAbsent || incidentType != null) {
+      map['incident_type'] = Variable<String>(incidentType);
+    }
     return map;
   }
 
@@ -999,6 +1018,9 @@ class DashcamClipsTableData extends DataClass
       createdAt: Value(createdAt),
       isLocked: Value(isLocked),
       sizeBytes: Value(sizeBytes),
+      incidentType: incidentType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(incidentType),
     );
   }
 
@@ -1012,6 +1034,7 @@ class DashcamClipsTableData extends DataClass
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       isLocked: serializer.fromJson<bool>(json['isLocked']),
       sizeBytes: serializer.fromJson<int>(json['sizeBytes']),
+      incidentType: serializer.fromJson<String?>(json['incidentType']),
     );
   }
   @override
@@ -1024,6 +1047,7 @@ class DashcamClipsTableData extends DataClass
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'isLocked': serializer.toJson<bool>(isLocked),
       'sizeBytes': serializer.toJson<int>(sizeBytes),
+      'incidentType': serializer.toJson<String?>(incidentType),
     };
   }
 
@@ -1033,7 +1057,8 @@ class DashcamClipsTableData extends DataClass
           String? path,
           DateTime? createdAt,
           bool? isLocked,
-          int? sizeBytes}) =>
+          int? sizeBytes,
+          Value<String?> incidentType = const Value.absent()}) =>
       DashcamClipsTableData(
         id: id ?? this.id,
         tripId: tripId.present ? tripId.value : this.tripId,
@@ -1041,6 +1066,8 @@ class DashcamClipsTableData extends DataClass
         createdAt: createdAt ?? this.createdAt,
         isLocked: isLocked ?? this.isLocked,
         sizeBytes: sizeBytes ?? this.sizeBytes,
+        incidentType:
+            incidentType.present ? incidentType.value : this.incidentType,
       );
   DashcamClipsTableData copyWithCompanion(DashcamClipsTableCompanion data) {
     return DashcamClipsTableData(
@@ -1050,6 +1077,9 @@ class DashcamClipsTableData extends DataClass
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       isLocked: data.isLocked.present ? data.isLocked.value : this.isLocked,
       sizeBytes: data.sizeBytes.present ? data.sizeBytes.value : this.sizeBytes,
+      incidentType: data.incidentType.present
+          ? data.incidentType.value
+          : this.incidentType,
     );
   }
 
@@ -1061,14 +1091,15 @@ class DashcamClipsTableData extends DataClass
           ..write('path: $path, ')
           ..write('createdAt: $createdAt, ')
           ..write('isLocked: $isLocked, ')
-          ..write('sizeBytes: $sizeBytes')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('incidentType: $incidentType')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, tripId, path, createdAt, isLocked, sizeBytes);
+  int get hashCode => Object.hash(
+      id, tripId, path, createdAt, isLocked, sizeBytes, incidentType);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1078,7 +1109,8 @@ class DashcamClipsTableData extends DataClass
           other.path == this.path &&
           other.createdAt == this.createdAt &&
           other.isLocked == this.isLocked &&
-          other.sizeBytes == this.sizeBytes);
+          other.sizeBytes == this.sizeBytes &&
+          other.incidentType == this.incidentType);
 }
 
 class DashcamClipsTableCompanion
@@ -1089,6 +1121,7 @@ class DashcamClipsTableCompanion
   final Value<DateTime> createdAt;
   final Value<bool> isLocked;
   final Value<int> sizeBytes;
+  final Value<String?> incidentType;
   const DashcamClipsTableCompanion({
     this.id = const Value.absent(),
     this.tripId = const Value.absent(),
@@ -1096,6 +1129,7 @@ class DashcamClipsTableCompanion
     this.createdAt = const Value.absent(),
     this.isLocked = const Value.absent(),
     this.sizeBytes = const Value.absent(),
+    this.incidentType = const Value.absent(),
   });
   DashcamClipsTableCompanion.insert({
     this.id = const Value.absent(),
@@ -1104,6 +1138,7 @@ class DashcamClipsTableCompanion
     required DateTime createdAt,
     this.isLocked = const Value.absent(),
     this.sizeBytes = const Value.absent(),
+    this.incidentType = const Value.absent(),
   })  : path = Value(path),
         createdAt = Value(createdAt);
   static Insertable<DashcamClipsTableData> custom({
@@ -1113,6 +1148,7 @@ class DashcamClipsTableCompanion
     Expression<DateTime>? createdAt,
     Expression<bool>? isLocked,
     Expression<int>? sizeBytes,
+    Expression<String>? incidentType,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1121,6 +1157,7 @@ class DashcamClipsTableCompanion
       if (createdAt != null) 'created_at': createdAt,
       if (isLocked != null) 'is_locked': isLocked,
       if (sizeBytes != null) 'size_bytes': sizeBytes,
+      if (incidentType != null) 'incident_type': incidentType,
     });
   }
 
@@ -1130,7 +1167,8 @@ class DashcamClipsTableCompanion
       Value<String>? path,
       Value<DateTime>? createdAt,
       Value<bool>? isLocked,
-      Value<int>? sizeBytes}) {
+      Value<int>? sizeBytes,
+      Value<String?>? incidentType}) {
     return DashcamClipsTableCompanion(
       id: id ?? this.id,
       tripId: tripId ?? this.tripId,
@@ -1138,6 +1176,7 @@ class DashcamClipsTableCompanion
       createdAt: createdAt ?? this.createdAt,
       isLocked: isLocked ?? this.isLocked,
       sizeBytes: sizeBytes ?? this.sizeBytes,
+      incidentType: incidentType ?? this.incidentType,
     );
   }
 
@@ -1162,6 +1201,9 @@ class DashcamClipsTableCompanion
     if (sizeBytes.present) {
       map['size_bytes'] = Variable<int>(sizeBytes.value);
     }
+    if (incidentType.present) {
+      map['incident_type'] = Variable<String>(incidentType.value);
+    }
     return map;
   }
 
@@ -1173,7 +1215,8 @@ class DashcamClipsTableCompanion
           ..write('path: $path, ')
           ..write('createdAt: $createdAt, ')
           ..write('isLocked: $isLocked, ')
-          ..write('sizeBytes: $sizeBytes')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('incidentType: $incidentType')
           ..write(')'))
         .toString();
   }
@@ -1918,6 +1961,7 @@ typedef $$DashcamClipsTableTableCreateCompanionBuilder
   required DateTime createdAt,
   Value<bool> isLocked,
   Value<int> sizeBytes,
+  Value<String?> incidentType,
 });
 typedef $$DashcamClipsTableTableUpdateCompanionBuilder
     = DashcamClipsTableCompanion Function({
@@ -1927,6 +1971,7 @@ typedef $$DashcamClipsTableTableUpdateCompanionBuilder
   Value<DateTime> createdAt,
   Value<bool> isLocked,
   Value<int> sizeBytes,
+  Value<String?> incidentType,
 });
 
 final class $$DashcamClipsTableTableReferences extends BaseReferences<
@@ -1974,6 +2019,9 @@ class $$DashcamClipsTableTableFilterComposer
   ColumnFilters<int> get sizeBytes => $composableBuilder(
       column: $table.sizeBytes, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get incidentType => $composableBuilder(
+      column: $table.incidentType, builder: (column) => ColumnFilters(column));
+
   $$TripsTableTableFilterComposer get tripId {
     final $$TripsTableTableFilterComposer composer = $composerBuilder(
         composer: this,
@@ -2019,6 +2067,10 @@ class $$DashcamClipsTableTableOrderingComposer
   ColumnOrderings<int> get sizeBytes => $composableBuilder(
       column: $table.sizeBytes, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get incidentType => $composableBuilder(
+      column: $table.incidentType,
+      builder: (column) => ColumnOrderings(column));
+
   $$TripsTableTableOrderingComposer get tripId {
     final $$TripsTableTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -2063,6 +2115,9 @@ class $$DashcamClipsTableTableAnnotationComposer
 
   GeneratedColumn<int> get sizeBytes =>
       $composableBuilder(column: $table.sizeBytes, builder: (column) => column);
+
+  GeneratedColumn<String> get incidentType => $composableBuilder(
+      column: $table.incidentType, builder: (column) => column);
 
   $$TripsTableTableAnnotationComposer get tripId {
     final $$TripsTableTableAnnotationComposer composer = $composerBuilder(
@@ -2116,6 +2171,7 @@ class $$DashcamClipsTableTableTableManager extends RootTableManager<
             Value<DateTime> createdAt = const Value.absent(),
             Value<bool> isLocked = const Value.absent(),
             Value<int> sizeBytes = const Value.absent(),
+            Value<String?> incidentType = const Value.absent(),
           }) =>
               DashcamClipsTableCompanion(
             id: id,
@@ -2124,6 +2180,7 @@ class $$DashcamClipsTableTableTableManager extends RootTableManager<
             createdAt: createdAt,
             isLocked: isLocked,
             sizeBytes: sizeBytes,
+            incidentType: incidentType,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -2132,6 +2189,7 @@ class $$DashcamClipsTableTableTableManager extends RootTableManager<
             required DateTime createdAt,
             Value<bool> isLocked = const Value.absent(),
             Value<int> sizeBytes = const Value.absent(),
+            Value<String?> incidentType = const Value.absent(),
           }) =>
               DashcamClipsTableCompanion.insert(
             id: id,
@@ -2140,6 +2198,7 @@ class $$DashcamClipsTableTableTableManager extends RootTableManager<
             createdAt: createdAt,
             isLocked: isLocked,
             sizeBytes: sizeBytes,
+            incidentType: incidentType,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (

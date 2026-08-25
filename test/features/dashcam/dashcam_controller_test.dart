@@ -258,7 +258,7 @@ void main() {
     expect(repository.clips.values.single.isLocked, isTrue);
     expect(
       repository.clips.values.single.incidentType,
-      DashcamIncidentType.manualEvent,
+      isNull,
     );
   });
 
@@ -271,10 +271,8 @@ void main() {
     await controller.finalizeRecording();
     expect(
       repository.clips.values.single.incidentType,
-      DashcamIncidentType.severeBraking,
+      DashcamIncidentType.manualEvent,
     );
-
-    await controller.finalizeRecording();
     expect(repository.clips.values.single.isLocked, isTrue);
   });
 
@@ -287,6 +285,11 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 10));
 
     expect(controller.isCurrentClipLocked.value, isTrue);
+    await controller.finalizeRecording();
+    expect(
+      repository.clips.values.single.incidentType,
+      DashcamIncidentType.severeBraking,
+    );
   });
 
   test('small speed changes do not auto-lock the current clip', () async {
