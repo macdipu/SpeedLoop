@@ -11,16 +11,21 @@ class DashcamClipMetadata {
     required this.createdAt,
     required this.isLocked,
     required this.sizeBytes,
+    this.tripId,
   });
 
   final String path;
   final DateTime createdAt;
   final bool isLocked;
   final int sizeBytes;
+  final int? tripId;
 }
 
 abstract class DashcamClipRepository {
   Future<List<DashcamClipMetadata>> getAll();
+  Future<List<DashcamClipMetadata>> getForTrip(int tripId);
+  Future<Map<int, int>> getClipCountsByTripIds(List<int> tripIds);
+  Future<Map<int, int>> getProtectedClipCountsByTripIds(List<int> tripIds);
   Future<void> upsert(DashcamClipMetadata metadata);
   Future<void> setLocked(String path, bool locked);
   Future<void> deleteMetadata(String path);
@@ -42,15 +47,41 @@ class DriftDashcamClipRepository implements DashcamClipRepository {
             createdAt: row.createdAt,
             isLocked: row.isLocked,
             sizeBytes: row.sizeBytes,
+            tripId: row.tripId,
           ),
         )
         .toList();
   }
 
   @override
+  Future<List<DashcamClipMetadata>> getForTrip(int tripId) async {
+    final rows = await _database.dashcamClipDao.getClipsForTrip(tripId);
+    return rows
+        .map(
+          (row) => DashcamClipMetadata(
+            path: row.path,
+            createdAt: row.createdAt,
+            isLocked: row.isLocked,
+            sizeBytes: row.sizeBytes,
+            tripId: row.tripId,
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<Map<int, int>> getClipCountsByTripIds(List<int> tripIds) =>
+      _database.dashcamClipDao.getClipCountsForTrips(tripIds);
+
+  @override
+  Future<Map<int, int>> getProtectedClipCountsByTripIds(List<int> tripIds) =>
+      _database.dashcamClipDao.getLockedClipCountsForTrips(tripIds);
+
+  @override
   Future<void> upsert(DashcamClipMetadata metadata) =>
       _database.dashcamClipDao.upsertClip(
         DashcamClipsTableCompanion(
+          tripId: drift.Value(metadata.tripId),
           path: drift.Value(metadata.path),
           createdAt: drift.Value(metadata.createdAt),
           isLocked: drift.Value(metadata.isLocked),
@@ -115,6 +146,7 @@ class DashcamStorageManager {
             createdAt: existing?.createdAt ?? created,
             isLocked: existing?.isLocked ?? false,
             sizeBytes: size,
+            tripId: existing?.tripId,
           ),
         );
       }

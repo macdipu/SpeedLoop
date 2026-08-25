@@ -64,6 +64,34 @@ class MemoryRepository implements DashcamClipRepository {
   @override
   Future<List<DashcamClipMetadata>> getAll() async => clips.values.toList();
   @override
+  Future<List<DashcamClipMetadata>> getForTrip(int tripId) async =>
+      clips.values.where((clip) => clip.tripId == tripId).toList();
+  @override
+  Future<Map<int, int>> getClipCountsByTripIds(List<int> tripIds) async {
+    final counts = <int, int>{};
+    for (final clip in clips.values) {
+      final tripId = clip.tripId;
+      if (tripId != null && tripIds.contains(tripId)) {
+        counts[tripId] = (counts[tripId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  @override
+  Future<Map<int, int>> getProtectedClipCountsByTripIds(
+      List<int> tripIds) async {
+    final counts = <int, int>{};
+    for (final clip in clips.values) {
+      final tripId = clip.tripId;
+      if (tripId != null && tripIds.contains(tripId) && clip.isLocked) {
+        counts[tripId] = (counts[tripId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  @override
   Future<void> setLocked(String path, bool locked) async {
     final old = clips[path]!;
     clips[path] = DashcamClipMetadata(
@@ -71,6 +99,7 @@ class MemoryRepository implements DashcamClipRepository {
       createdAt: old.createdAt,
       isLocked: locked,
       sizeBytes: old.sizeBytes,
+      tripId: old.tripId,
     );
   }
 
@@ -135,6 +164,14 @@ class StubTripController extends TripController {
   int startCalls = 0;
   int stopCalls = 0;
 
+  void seedTrip(int tripId) {
+    currentTripId.value = tripId;
+  }
+
+  void seedSpeed(double speedKmh) {
+    currentSpeed.value = speedKmh;
+  }
+
   @override
   Future<void> startTrip() async {
     startCalls++;
@@ -157,6 +194,7 @@ void main() {
   late MemoryRepository repository;
   late StubTripController trip;
   late DashcamController controller;
+  late SettingsController settings;
 
   setUp(() async {
     Get.testMode = true;
@@ -165,11 +203,12 @@ void main() {
     camera = FakeCameraDriver(directory);
     repository = MemoryRepository();
     trip = StubTripController();
+    settings = SettingsController();
     controller = DashcamController(
       cameraDriver: camera,
       clipRepository: repository,
       directoryProvider: () async => directory,
-      settingsController: SettingsController(),
+      settingsController: settings,
       injectedTripController: trip,
     );
     controller.onInit();
@@ -216,6 +255,66 @@ void main() {
     controller.toggleLock();
     await controller.finalizeRecording();
     expect(repository.clips.values.single.isLocked, isTrue);
+  });
+
+  test('mark event protects the current clip before finalization', () async {
+    await controller.toggleRecording();
+
+    controller.markEvent();
+    expect(controller.isCurrentClipLocked.value, isTrue);
+
+    await controller.finalizeRecording();
+    expect(repository.clips.values.single.isLocked, isTrue);
+  });
+
+  test('severe deceleration auto-locks the current clip', () async {
+    await controller.toggleRecording();
+
+    trip.seedSpeed(62);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    trip.seedSpeed(30);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(controller.isCurrentClipLocked.value, isTrue);
+  });
+
+  test('small speed changes do not auto-lock the current clip', () async {
+    await controller.toggleRecording();
+
+    trip.seedSpeed(42);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    trip.seedSpeed(28);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(controller.isCurrentClipLocked.value, isFalse);
+  });
+
+  test('saved clip library refreshes after finalize, lock, and delete',
+      () async {
+    trip.seedTrip(77);
+    await controller.toggleRecording();
+    await controller.finalizeRecording();
+
+    expect(controller.savedClips, hasLength(1));
+    final path = controller.savedClips.single.path;
+    expect(controller.savedClips.single.tripId, 77);
+
+    await controller.setClipLocked(path, true);
+    expect(controller.savedClips.single.isLocked, isTrue);
+
+    await controller.deleteSavedClip(path);
+    expect(controller.savedClips, isEmpty);
+    expect(await File(path).exists(), isFalse);
+  });
+
+  test('physical segment length stays bounded even for long loop settings',
+      () async {
+    settings.loopDuration.value = LoopDuration.ten;
+
+    await controller.toggleRecording();
+
+    expect(controller.clipTotalSeconds.value, 60);
+    expect(camera.startCalls, 1);
   });
 
   test('shutdown finalizes before camera disposal', () async {

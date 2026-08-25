@@ -24,7 +24,7 @@ class _HomeShellState extends State<HomeShell> {
   // Cached screen instances — created once, reused across rebuilds.
   late final SpeedometerScreen _speedometerScreen = SpeedometerScreen();
   late final TripRecordingScreen _tripRecordingScreen = TripRecordingScreen();
-  late final TripHistoryScreen _tripHistoryScreen = TripHistoryScreen();
+  late final TripHistoryScreen _tripHistoryScreen = const TripHistoryScreen();
   // Dashcam is created lazily — only after user first taps the tab.
   DashcamScreen? _dashcamScreen;
 

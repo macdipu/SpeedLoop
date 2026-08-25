@@ -28,6 +28,11 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
 
   static const int maxStorageBytes = 500 * 1024 * 1024;
   static const int safeContinuousSegmentSeconds = 60;
+  static const int recordingHeadroomBytes = 100 * 1024 * 1024;
+  static const double autoLockMinStartingSpeedKmh = 35;
+  static const double autoLockMinSpeedDropKmh = 25;
+  static const int autoLockDetectionWindowSeconds = 2;
+  static const int autoLockCooldownSeconds = 8;
 
   final DashcamCameraDriver _camera;
   final DashcamClipRepository _clipRepository;
@@ -55,6 +60,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
   final resolutionLabel = '1080p'.obs;
   final isCurrentClipLocked = false.obs;
   final isSwitchingClip = false.obs;
+  final savedClips = <DashcamClipMetadata>[].obs;
 
   Timer? _uiTimer;
   Timer? _cycleTimer;
@@ -64,17 +70,24 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
   Future<void>? _finalizationFuture;
   Future<void>? _cycleFuture;
   bool _cameraDisposed = false;
+  Worker? _speedWorker;
+  double? _lastObservedSpeedKmh;
+  DateTime? _lastObservedSpeedAt;
+  DateTime? _lastAutoLockAt;
 
   @override
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+    _speedWorker =
+        ever<double>(tripController.currentSpeed, _handleSpeedSample);
     unawaited(_initialize());
   }
 
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
+    _speedWorker?.dispose();
     // GetX lifecycle callbacks are synchronous. The shared shutdown future owns
     // ordering and disposes the camera only after any clip is finalized.
     unawaited(shutdown());
@@ -103,6 +116,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       final directory = await _directoryProvider();
       await _storage.reconcile(directory);
       await _refreshStorage(directory);
+      await refreshSavedClips();
       await _camera.initialize();
       _cameraDisposed = false;
       final dimension = _camera.maxPreviewDimension;
@@ -127,8 +141,78 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
     isCurrentClipLocked.value = !isCurrentClipLocked.value;
   }
 
+  void markEvent({
+    String message = 'Current clip marked and protected.',
+  }) {
+    if (!isRecording.value) return;
+    if (!isCurrentClipLocked.value) {
+      isCurrentClipLocked.value = true;
+    }
+    if (Get.context != null) {
+      Get.rawSnackbar(
+        message: message,
+        duration: const Duration(seconds: 2),
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.black87,
+      );
+    }
+  }
+
+  void _handleSpeedSample(double speedKmh) {
+    final observedAt = DateTime.now();
+    final previousSpeed = _lastObservedSpeedKmh;
+    final previousAt = _lastObservedSpeedAt;
+    _lastObservedSpeedKmh = speedKmh;
+    _lastObservedSpeedAt = observedAt;
+
+    if (!isRecording.value || previousSpeed == null || previousAt == null) {
+      return;
+    }
+
+    final elapsed = observedAt.difference(previousAt);
+    final dropKmh = previousSpeed - speedKmh;
+    if (previousSpeed < autoLockMinStartingSpeedKmh ||
+        dropKmh < autoLockMinSpeedDropKmh ||
+        elapsed.inMilliseconds <= 0 ||
+        elapsed.inSeconds > autoLockDetectionWindowSeconds) {
+      return;
+    }
+
+    final lastAutoLockAt = _lastAutoLockAt;
+    if (lastAutoLockAt != null &&
+        observedAt.difference(lastAutoLockAt).inSeconds <
+            autoLockCooldownSeconds) {
+      return;
+    }
+
+    _lastAutoLockAt = observedAt;
+    markEvent(message: 'Severe braking detected. Current clip protected.');
+  }
+
   Future<void> setClipLocked(String path, bool locked) async {
     await _clipRepository.setLocked(path, locked);
+    await refreshSavedClips();
+  }
+
+  Future<void> refreshSavedClips() async {
+    final clips = await _clipRepository.getAll();
+    clips.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    savedClips.assignAll(clips);
+  }
+
+  Future<void> deleteSavedClip(String path) async {
+    if (isRecording.value) {
+      _setError('Stop recording before deleting a saved clip.');
+      return;
+    }
+    final file = File(path);
+    if (await file.exists()) {
+      await file.delete();
+    }
+    await _clipRepository.deleteMetadata(path);
+    final directory = await _directoryProvider();
+    await _refreshStorage(directory);
+    await refreshSavedClips();
   }
 
   Future<void> _startRecording() async {
@@ -137,7 +221,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
     final directory = await _directoryProvider();
     final quota = await _storage.enforceQuota(
       directory: directory,
-      maxBytes: maxStorageBytes,
+      maxBytes: _recordingBudgetBytes,
     );
     await _applyStorageResult(quota);
     if (!quota.canRecord) {
@@ -157,10 +241,9 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       }
 
       final selectedSeconds = _settings.loopDuration.value.minutes * 60;
-      // Even when the UI setting is "Off", physical files are bounded so a
-      // single recording cannot grow indefinitely and bypass the quota.
-      clipTotalSeconds.value =
-          selectedSeconds > 0 ? selectedSeconds : safeContinuousSegmentSeconds;
+      // Physical files are always bounded so long recordings cannot outgrow
+      // the storage cap before quota cleanup runs.
+      clipTotalSeconds.value = _physicalSegmentSeconds(selectedSeconds);
       await _camera.startRecording();
       final now = DateTime.now();
       _recordingStart = now;
@@ -208,6 +291,20 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
         maxBytes: maxStorageBytes,
       );
       await _applyStorageResult(result);
+      if (result.canRecord) {
+        final headroom = await _storage.enforceQuota(
+          directory: directory,
+          maxBytes: _recordingBudgetBytes,
+        );
+        await _applyStorageResult(headroom);
+        if (!headroom.canRecord) {
+          isStorageFull.value = true;
+          _setError(
+            'Locked dashcam clips leave too little free space for another segment.',
+          );
+        }
+      }
+      await refreshSavedClips();
     } catch (error) {
       _setError('Could not safely finalize the dashcam clip: $error');
     } finally {
@@ -263,6 +360,23 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
         }
         return;
       }
+      final headroom = await _storage.enforceQuota(
+        directory: directory,
+        maxBytes: _recordingBudgetBytes,
+      );
+      await _applyStorageResult(headroom);
+      if (!headroom.canRecord) {
+        isStorageFull.value = true;
+        isRecording.value = false;
+        _uiTimer?.cancel();
+        _setError(
+            'Recording stopped because locked clips leave too little free space for another segment.');
+        if (_ownsTripRecording && tripController.isRecording.value) {
+          await tripController.stopTrip();
+          _ownsTripRecording = false;
+        }
+        return;
+      }
       if (!isRecording.value) return;
       await _camera.startRecording();
       _clipStart = DateTime.now();
@@ -271,6 +385,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       segmentCount.value++;
       _showSegmentToast();
       _scheduleCycleTimer(clipTotalSeconds.value);
+      await refreshSavedClips();
     } catch (error) {
       isRecording.value = false;
       _uiTimer?.cancel();
@@ -288,12 +403,14 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
     final saved = await File(source.path).rename(destination);
     await _clipRepository.upsert(
       DashcamClipMetadata(
+        tripId: tripController.currentTripId.value,
         path: destination,
         createdAt: now,
         isLocked: locked,
         sizeBytes: await saved.length(),
       ),
     );
+    await refreshSavedClips();
   }
 
   Future<void> _applyStorageResult(DashcamStorageResult result) async {
@@ -307,6 +424,17 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       maxBytes: maxStorageBytes,
     );
     await _applyStorageResult(result);
+  }
+
+  int get _recordingBudgetBytes => maxStorageBytes > recordingHeadroomBytes
+      ? maxStorageBytes - recordingHeadroomBytes
+      : maxStorageBytes;
+
+  int _physicalSegmentSeconds(int selectedSeconds) {
+    if (selectedSeconds <= 0) return safeContinuousSegmentSeconds;
+    return selectedSeconds < safeContinuousSegmentSeconds
+        ? selectedSeconds
+        : safeContinuousSegmentSeconds;
   }
 
   void _startUiTimer() {

@@ -18,6 +18,8 @@ import '../../../../core/utils/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/gpx_utils.dart';
 import '../../../../core/utils/gps_utils.dart';
+import '../../../dashcam/data/dashcam_clip_repository.dart';
+import '../../../dashcam/presentation/widgets/clip_preview_sheet.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../domain/entities/trip_entity.dart';
 import '../controllers/trip_controller.dart';
@@ -32,8 +34,10 @@ class TripDetailsScreen extends StatefulWidget {
 class _TripDetailsScreenState extends State<TripDetailsScreen> {
   final controller = Get.find<TripController>();
   final settings = Get.find<SettingsController>();
+  final clipRepository = DriftDashcamClipRepository();
 
   TripEntity? trip;
+  List<DashcamClipMetadata> relatedClips = const [];
   bool loading = true;
 
   // Playback
@@ -49,11 +53,59 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
 
   Future<void> _loadTrip(int id) async {
     final t = await controller.getTrip(id);
+    final clips = await clipRepository.getForTrip(id);
     if (mounted) {
       setState(() {
         trip = t;
+        relatedClips = clips;
         loading = false;
       });
+    }
+  }
+
+  Future<void> _toggleClipLock(DashcamClipMetadata clip) async {
+    await clipRepository.setLocked(clip.path, !clip.isLocked);
+    if (trip?.id != null) {
+      final refreshed = await clipRepository.getForTrip(trip!.id!);
+      if (mounted) {
+        setState(() => relatedClips = refreshed);
+      }
+    }
+  }
+
+  Future<void> _deleteClip(DashcamClipMetadata clip) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1D20),
+        title: const Text('Delete clip'),
+        content: const Text(
+          'This deletes the linked dashcam clip from local storage.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final file = File(clip.path);
+    if (await file.exists()) {
+      await file.delete();
+    }
+    await clipRepository.deleteMetadata(clip.path);
+    if (trip?.id != null) {
+      final refreshed = await clipRepository.getForTrip(trip!.id!);
+      if (mounted) {
+        setState(() => relatedClips = refreshed);
+      }
     }
   }
 
@@ -248,6 +300,33 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                     ]);
                   }),
                   _statRow(context, 'GPS Points', '${points.length}'),
+                  if (relatedClips.isNotEmpty) ...[
+                    const SizedBox(height: 18),
+                    _TripDashcamSummaryCard(clips: relatedClips),
+                    const SizedBox(height: 14),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Linked Dashcam Clips',
+                        style: TextStyle(
+                          color: context.textPrimaryColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ...relatedClips.map(
+                      (clip) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _TripClipTile(
+                          clip: clip,
+                          onToggleLock: () => _toggleClipLock(clip),
+                          onDelete: () => _deleteClip(clip),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -271,6 +350,234 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                   color: context.textPrimaryColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+}
+
+class _TripDashcamSummaryCard extends StatelessWidget {
+  const _TripDashcamSummaryCard({required this.clips});
+
+  final List<DashcamClipMetadata> clips;
+
+  @override
+  Widget build(BuildContext context) {
+    final protectedCount = clips.where((clip) => clip.isLocked).length;
+    final totalBytes = clips.fold<int>(0, (sum, clip) => sum + clip.sizeBytes);
+    final totalMb = totalBytes / (1024 * 1024);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.cardBorderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Dashcam Summary',
+            style: TextStyle(
+              color: context.textPrimaryColor,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _TripDashcamMetric(
+                  icon: Icons.videocam_outlined,
+                  label: 'Clips',
+                  value: '${clips.length}',
+                ),
+              ),
+              Expanded(
+                child: _TripDashcamMetric(
+                  icon: Icons.warning_amber_rounded,
+                  label: 'Protected',
+                  value: '$protectedCount',
+                  accent: Colors.redAccent,
+                ),
+              ),
+              Expanded(
+                child: _TripDashcamMetric(
+                  icon: Icons.folder_outlined,
+                  label: 'Storage',
+                  value: totalMb < 1024
+                      ? '${totalMb.toStringAsFixed(1)} MB'
+                      : '${(totalMb / 1024).toStringAsFixed(2)} GB',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TripDashcamMetric extends StatelessWidget {
+  const _TripDashcamMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.accent = AppColors.primary,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: accent, size: 18),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: TextStyle(
+              color: context.textPrimaryColor,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: context.textSecondaryColor,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TripClipTile extends StatelessWidget {
+  const _TripClipTile({
+    required this.clip,
+    required this.onToggleLock,
+    required this.onDelete,
+  });
+
+  final DashcamClipMetadata clip;
+  final Future<void> Function() onToggleLock;
+  final Future<void> Function() onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final filename = clip.path.split('/').last;
+    final sizeMb = clip.sizeBytes / (1024 * 1024);
+    final createdLabel = DateFormat('MMM d, HH:mm').format(clip.createdAt);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: clip.isLocked
+              ? Colors.amber.withValues(alpha: 0.5)
+              : context.cardBorderColor,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                clip.isLocked ? Icons.lock : Icons.lock_open_outlined,
+                size: 18,
+                color: clip.isLocked ? Colors.amber : context.textDisabledColor,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  filename,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: context.textPrimaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                '${sizeMb.toStringAsFixed(1)} MB',
+                style: TextStyle(
+                  color: context.textSecondaryColor,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            createdLabel,
+            style: TextStyle(color: context.textSecondaryColor, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: () async {
+                  await showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => ClipPreviewSheet(
+                      path: clip.path,
+                      title: filename,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.play_circle_outline, size: 16),
+                label: const Text('Preview'),
+              ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                onPressed: onToggleLock,
+                icon: Icon(clip.isLocked ? Icons.lock_open : Icons.lock,
+                    size: 16),
+                label: Text(clip.isLocked ? 'Unlock' : 'Lock'),
+              ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  await Share.shareXFiles(
+                    [XFile(clip.path)],
+                    subject: 'SpeedLoop dashcam clip',
+                  );
+                },
+                icon: const Icon(Icons.share_outlined, size: 16),
+                label: const Text('Share'),
+              ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline, size: 16),
+                label: const Text('Delete'),
+              ),
+            ],
+          ),
         ],
       ),
     );

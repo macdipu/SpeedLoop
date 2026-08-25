@@ -13,6 +13,35 @@ class MemoryClipRepository implements DashcamClipRepository {
   Future<List<DashcamClipMetadata>> getAll() async => clips.values.toList();
 
   @override
+  Future<List<DashcamClipMetadata>> getForTrip(int tripId) async =>
+      clips.values.where((clip) => clip.tripId == tripId).toList();
+
+  @override
+  Future<Map<int, int>> getClipCountsByTripIds(List<int> tripIds) async {
+    final counts = <int, int>{};
+    for (final clip in clips.values) {
+      final tripId = clip.tripId;
+      if (tripId != null && tripIds.contains(tripId)) {
+        counts[tripId] = (counts[tripId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  @override
+  Future<Map<int, int>> getProtectedClipCountsByTripIds(
+      List<int> tripIds) async {
+    final counts = <int, int>{};
+    for (final clip in clips.values) {
+      final tripId = clip.tripId;
+      if (tripId != null && tripIds.contains(tripId) && clip.isLocked) {
+        counts[tripId] = (counts[tripId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  @override
   Future<void> setLocked(String path, bool locked) async {
     final clip = clips[path]!;
     clips[path] = DashcamClipMetadata(
@@ -20,6 +49,7 @@ class MemoryClipRepository implements DashcamClipRepository {
       createdAt: clip.createdAt,
       isLocked: locked,
       sizeBytes: clip.sizeBytes,
+      tripId: clip.tripId,
     );
   }
 

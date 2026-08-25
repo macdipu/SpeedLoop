@@ -55,7 +55,7 @@ class AppPages {
     ),
     GetPage(
       name: Routes.tripHistory,
-      page: () => TripHistoryScreen(),
+      page: () => const TripHistoryScreen(),
       binding: TripBinding(),
     ),
     GetPage(

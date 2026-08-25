@@ -851,6 +851,14 @@ class $DashcamClipsTableTable extends DashcamClipsTable
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _tripIdMeta = const VerificationMeta('tripId');
+  @override
+  late final GeneratedColumn<int> tripId = GeneratedColumn<int>(
+      'trip_id', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES trips (id) ON DELETE SET NULL'));
   static const VerificationMeta _pathMeta = const VerificationMeta('path');
   @override
   late final GeneratedColumn<String> path = GeneratedColumn<String>(
@@ -884,7 +892,7 @@ class $DashcamClipsTableTable extends DashcamClipsTable
       defaultValue: const Constant(0));
   @override
   List<GeneratedColumn> get $columns =>
-      [id, path, createdAt, isLocked, sizeBytes];
+      [id, tripId, path, createdAt, isLocked, sizeBytes];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -898,6 +906,10 @@ class $DashcamClipsTableTable extends DashcamClipsTable
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('trip_id')) {
+      context.handle(_tripIdMeta,
+          tripId.isAcceptableOrUnknown(data['trip_id']!, _tripIdMeta));
     }
     if (data.containsKey('path')) {
       context.handle(
@@ -930,6 +942,8 @@ class $DashcamClipsTableTable extends DashcamClipsTable
     return DashcamClipsTableData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      tripId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}trip_id']),
       path: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}path'])!,
       createdAt: attachedDatabase.typeMapping
@@ -950,12 +964,14 @@ class $DashcamClipsTableTable extends DashcamClipsTable
 class DashcamClipsTableData extends DataClass
     implements Insertable<DashcamClipsTableData> {
   final int id;
+  final int? tripId;
   final String path;
   final DateTime createdAt;
   final bool isLocked;
   final int sizeBytes;
   const DashcamClipsTableData(
       {required this.id,
+      this.tripId,
       required this.path,
       required this.createdAt,
       required this.isLocked,
@@ -964,6 +980,9 @@ class DashcamClipsTableData extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    if (!nullToAbsent || tripId != null) {
+      map['trip_id'] = Variable<int>(tripId);
+    }
     map['path'] = Variable<String>(path);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['is_locked'] = Variable<bool>(isLocked);
@@ -974,6 +993,8 @@ class DashcamClipsTableData extends DataClass
   DashcamClipsTableCompanion toCompanion(bool nullToAbsent) {
     return DashcamClipsTableCompanion(
       id: Value(id),
+      tripId:
+          tripId == null && nullToAbsent ? const Value.absent() : Value(tripId),
       path: Value(path),
       createdAt: Value(createdAt),
       isLocked: Value(isLocked),
@@ -986,6 +1007,7 @@ class DashcamClipsTableData extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return DashcamClipsTableData(
       id: serializer.fromJson<int>(json['id']),
+      tripId: serializer.fromJson<int?>(json['tripId']),
       path: serializer.fromJson<String>(json['path']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       isLocked: serializer.fromJson<bool>(json['isLocked']),
@@ -997,6 +1019,7 @@ class DashcamClipsTableData extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'tripId': serializer.toJson<int?>(tripId),
       'path': serializer.toJson<String>(path),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'isLocked': serializer.toJson<bool>(isLocked),
@@ -1006,12 +1029,14 @@ class DashcamClipsTableData extends DataClass
 
   DashcamClipsTableData copyWith(
           {int? id,
+          Value<int?> tripId = const Value.absent(),
           String? path,
           DateTime? createdAt,
           bool? isLocked,
           int? sizeBytes}) =>
       DashcamClipsTableData(
         id: id ?? this.id,
+        tripId: tripId.present ? tripId.value : this.tripId,
         path: path ?? this.path,
         createdAt: createdAt ?? this.createdAt,
         isLocked: isLocked ?? this.isLocked,
@@ -1020,6 +1045,7 @@ class DashcamClipsTableData extends DataClass
   DashcamClipsTableData copyWithCompanion(DashcamClipsTableCompanion data) {
     return DashcamClipsTableData(
       id: data.id.present ? data.id.value : this.id,
+      tripId: data.tripId.present ? data.tripId.value : this.tripId,
       path: data.path.present ? data.path.value : this.path,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       isLocked: data.isLocked.present ? data.isLocked.value : this.isLocked,
@@ -1031,6 +1057,7 @@ class DashcamClipsTableData extends DataClass
   String toString() {
     return (StringBuffer('DashcamClipsTableData(')
           ..write('id: $id, ')
+          ..write('tripId: $tripId, ')
           ..write('path: $path, ')
           ..write('createdAt: $createdAt, ')
           ..write('isLocked: $isLocked, ')
@@ -1040,12 +1067,14 @@ class DashcamClipsTableData extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(id, path, createdAt, isLocked, sizeBytes);
+  int get hashCode =>
+      Object.hash(id, tripId, path, createdAt, isLocked, sizeBytes);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is DashcamClipsTableData &&
           other.id == this.id &&
+          other.tripId == this.tripId &&
           other.path == this.path &&
           other.createdAt == this.createdAt &&
           other.isLocked == this.isLocked &&
@@ -1055,12 +1084,14 @@ class DashcamClipsTableData extends DataClass
 class DashcamClipsTableCompanion
     extends UpdateCompanion<DashcamClipsTableData> {
   final Value<int> id;
+  final Value<int?> tripId;
   final Value<String> path;
   final Value<DateTime> createdAt;
   final Value<bool> isLocked;
   final Value<int> sizeBytes;
   const DashcamClipsTableCompanion({
     this.id = const Value.absent(),
+    this.tripId = const Value.absent(),
     this.path = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.isLocked = const Value.absent(),
@@ -1068,6 +1099,7 @@ class DashcamClipsTableCompanion
   });
   DashcamClipsTableCompanion.insert({
     this.id = const Value.absent(),
+    this.tripId = const Value.absent(),
     required String path,
     required DateTime createdAt,
     this.isLocked = const Value.absent(),
@@ -1076,6 +1108,7 @@ class DashcamClipsTableCompanion
         createdAt = Value(createdAt);
   static Insertable<DashcamClipsTableData> custom({
     Expression<int>? id,
+    Expression<int>? tripId,
     Expression<String>? path,
     Expression<DateTime>? createdAt,
     Expression<bool>? isLocked,
@@ -1083,6 +1116,7 @@ class DashcamClipsTableCompanion
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (tripId != null) 'trip_id': tripId,
       if (path != null) 'path': path,
       if (createdAt != null) 'created_at': createdAt,
       if (isLocked != null) 'is_locked': isLocked,
@@ -1092,12 +1126,14 @@ class DashcamClipsTableCompanion
 
   DashcamClipsTableCompanion copyWith(
       {Value<int>? id,
+      Value<int?>? tripId,
       Value<String>? path,
       Value<DateTime>? createdAt,
       Value<bool>? isLocked,
       Value<int>? sizeBytes}) {
     return DashcamClipsTableCompanion(
       id: id ?? this.id,
+      tripId: tripId ?? this.tripId,
       path: path ?? this.path,
       createdAt: createdAt ?? this.createdAt,
       isLocked: isLocked ?? this.isLocked,
@@ -1110,6 +1146,9 @@ class DashcamClipsTableCompanion
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (tripId.present) {
+      map['trip_id'] = Variable<int>(tripId.value);
     }
     if (path.present) {
       map['path'] = Variable<String>(path.value);
@@ -1130,6 +1169,7 @@ class DashcamClipsTableCompanion
   String toString() {
     return (StringBuffer('DashcamClipsTableCompanion(')
           ..write('id: $id, ')
+          ..write('tripId: $tripId, ')
           ..write('path: $path, ')
           ..write('createdAt: $createdAt, ')
           ..write('isLocked: $isLocked, ')
@@ -1165,6 +1205,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
                 limitUpdateKind: UpdateKind.delete),
             result: [
               TableUpdate('trip_points', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('trips',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('dashcam_clips', kind: UpdateKind.update),
             ],
           ),
         ],
@@ -1209,6 +1256,24 @@ final class $$TripsTableTableReferences
 
     final cache =
         $_typedResult.readTableOrNull(_tripPointsTableRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$DashcamClipsTableTable,
+      List<DashcamClipsTableData>> _dashcamClipsTableRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.dashcamClipsTable,
+          aliasName: $_aliasNameGenerator(
+              db.tripsTable.id, db.dashcamClipsTable.tripId));
+
+  $$DashcamClipsTableTableProcessedTableManager get dashcamClipsTableRefs {
+    final manager =
+        $$DashcamClipsTableTableTableManager($_db, $_db.dashcamClipsTable)
+            .filter((f) => f.tripId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache =
+        $_typedResult.readTableOrNull(_dashcamClipsTableRefsTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -1261,6 +1326,27 @@ class $$TripsTableTableFilterComposer
             $$TripPointsTableTableFilterComposer(
               $db: $db,
               $table: $db.tripPointsTable,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> dashcamClipsTableRefs(
+      Expression<bool> Function($$DashcamClipsTableTableFilterComposer f) f) {
+    final $$DashcamClipsTableTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.dashcamClipsTable,
+        getReferencedColumn: (t) => t.tripId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DashcamClipsTableTableFilterComposer(
+              $db: $db,
+              $table: $db.dashcamClipsTable,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -1358,6 +1444,28 @@ class $$TripsTableTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> dashcamClipsTableRefs<T extends Object>(
+      Expression<T> Function($$DashcamClipsTableTableAnnotationComposer a) f) {
+    final $$DashcamClipsTableTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.dashcamClipsTable,
+            getReferencedColumn: (t) => t.tripId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$DashcamClipsTableTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.dashcamClipsTable,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
 }
 
 class $$TripsTableTableTableManager extends RootTableManager<
@@ -1371,7 +1479,8 @@ class $$TripsTableTableTableManager extends RootTableManager<
     $$TripsTableTableUpdateCompanionBuilder,
     (TripsTableData, $$TripsTableTableReferences),
     TripsTableData,
-    PrefetchHooks Function({bool tripPointsTableRefs})> {
+    PrefetchHooks Function(
+        {bool tripPointsTableRefs, bool dashcamClipsTableRefs})> {
   $$TripsTableTableTableManager(_$AppDatabase db, $TripsTableTable table)
       : super(TableManagerState(
           db: db,
@@ -1428,11 +1537,13 @@ class $$TripsTableTableTableManager extends RootTableManager<
                     $$TripsTableTableReferences(db, table, e)
                   ))
               .toList(),
-          prefetchHooksCallback: ({tripPointsTableRefs = false}) {
+          prefetchHooksCallback: (
+              {tripPointsTableRefs = false, dashcamClipsTableRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
-                if (tripPointsTableRefs) db.tripPointsTable
+                if (tripPointsTableRefs) db.tripPointsTable,
+                if (dashcamClipsTableRefs) db.dashcamClipsTable
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
@@ -1446,6 +1557,19 @@ class $$TripsTableTableTableManager extends RootTableManager<
                         managerFromTypedResult: (p0) =>
                             $$TripsTableTableReferences(db, table, p0)
                                 .tripPointsTableRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.tripId == item.id),
+                        typedResults: items),
+                  if (dashcamClipsTableRefs)
+                    await $_getPrefetchedData<TripsTableData, $TripsTableTable,
+                            DashcamClipsTableData>(
+                        currentTable: table,
+                        referencedTable: $$TripsTableTableReferences
+                            ._dashcamClipsTableRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$TripsTableTableReferences(db, table, p0)
+                                .dashcamClipsTableRefs,
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.tripId == item.id),
@@ -1468,7 +1592,8 @@ typedef $$TripsTableTableProcessedTableManager = ProcessedTableManager<
     $$TripsTableTableUpdateCompanionBuilder,
     (TripsTableData, $$TripsTableTableReferences),
     TripsTableData,
-    PrefetchHooks Function({bool tripPointsTableRefs})>;
+    PrefetchHooks Function(
+        {bool tripPointsTableRefs, bool dashcamClipsTableRefs})>;
 typedef $$TripPointsTableTableCreateCompanionBuilder = TripPointsTableCompanion
     Function({
   Value<int> id,
@@ -1788,6 +1913,7 @@ typedef $$TripPointsTableTableProcessedTableManager = ProcessedTableManager<
 typedef $$DashcamClipsTableTableCreateCompanionBuilder
     = DashcamClipsTableCompanion Function({
   Value<int> id,
+  Value<int?> tripId,
   required String path,
   required DateTime createdAt,
   Value<bool> isLocked,
@@ -1796,11 +1922,33 @@ typedef $$DashcamClipsTableTableCreateCompanionBuilder
 typedef $$DashcamClipsTableTableUpdateCompanionBuilder
     = DashcamClipsTableCompanion Function({
   Value<int> id,
+  Value<int?> tripId,
   Value<String> path,
   Value<DateTime> createdAt,
   Value<bool> isLocked,
   Value<int> sizeBytes,
 });
+
+final class $$DashcamClipsTableTableReferences extends BaseReferences<
+    _$AppDatabase, $DashcamClipsTableTable, DashcamClipsTableData> {
+  $$DashcamClipsTableTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $TripsTableTable _tripIdTable(_$AppDatabase db) =>
+      db.tripsTable.createAlias(
+          $_aliasNameGenerator(db.dashcamClipsTable.tripId, db.tripsTable.id));
+
+  $$TripsTableTableProcessedTableManager? get tripId {
+    final $_column = $_itemColumn<int>('trip_id');
+    if ($_column == null) return null;
+    final manager = $$TripsTableTableTableManager($_db, $_db.tripsTable)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tripIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
 
 class $$DashcamClipsTableTableFilterComposer
     extends Composer<_$AppDatabase, $DashcamClipsTableTable> {
@@ -1825,6 +1973,26 @@ class $$DashcamClipsTableTableFilterComposer
 
   ColumnFilters<int> get sizeBytes => $composableBuilder(
       column: $table.sizeBytes, builder: (column) => ColumnFilters(column));
+
+  $$TripsTableTableFilterComposer get tripId {
+    final $$TripsTableTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.tripId,
+        referencedTable: $db.tripsTable,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TripsTableTableFilterComposer(
+              $db: $db,
+              $table: $db.tripsTable,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $$DashcamClipsTableTableOrderingComposer
@@ -1850,6 +2018,26 @@ class $$DashcamClipsTableTableOrderingComposer
 
   ColumnOrderings<int> get sizeBytes => $composableBuilder(
       column: $table.sizeBytes, builder: (column) => ColumnOrderings(column));
+
+  $$TripsTableTableOrderingComposer get tripId {
+    final $$TripsTableTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.tripId,
+        referencedTable: $db.tripsTable,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TripsTableTableOrderingComposer(
+              $db: $db,
+              $table: $db.tripsTable,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $$DashcamClipsTableTableAnnotationComposer
@@ -1875,6 +2063,26 @@ class $$DashcamClipsTableTableAnnotationComposer
 
   GeneratedColumn<int> get sizeBytes =>
       $composableBuilder(column: $table.sizeBytes, builder: (column) => column);
+
+  $$TripsTableTableAnnotationComposer get tripId {
+    final $$TripsTableTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.tripId,
+        referencedTable: $db.tripsTable,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TripsTableTableAnnotationComposer(
+              $db: $db,
+              $table: $db.tripsTable,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $$DashcamClipsTableTableTableManager extends RootTableManager<
@@ -1886,13 +2094,9 @@ class $$DashcamClipsTableTableTableManager extends RootTableManager<
     $$DashcamClipsTableTableAnnotationComposer,
     $$DashcamClipsTableTableCreateCompanionBuilder,
     $$DashcamClipsTableTableUpdateCompanionBuilder,
-    (
-      DashcamClipsTableData,
-      BaseReferences<_$AppDatabase, $DashcamClipsTableTable,
-          DashcamClipsTableData>
-    ),
+    (DashcamClipsTableData, $$DashcamClipsTableTableReferences),
     DashcamClipsTableData,
-    PrefetchHooks Function()> {
+    PrefetchHooks Function({bool tripId})> {
   $$DashcamClipsTableTableTableManager(
       _$AppDatabase db, $DashcamClipsTableTable table)
       : super(TableManagerState(
@@ -1907,6 +2111,7 @@ class $$DashcamClipsTableTableTableManager extends RootTableManager<
                   $db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
+            Value<int?> tripId = const Value.absent(),
             Value<String> path = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<bool> isLocked = const Value.absent(),
@@ -1914,6 +2119,7 @@ class $$DashcamClipsTableTableTableManager extends RootTableManager<
           }) =>
               DashcamClipsTableCompanion(
             id: id,
+            tripId: tripId,
             path: path,
             createdAt: createdAt,
             isLocked: isLocked,
@@ -1921,6 +2127,7 @@ class $$DashcamClipsTableTableTableManager extends RootTableManager<
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
+            Value<int?> tripId = const Value.absent(),
             required String path,
             required DateTime createdAt,
             Value<bool> isLocked = const Value.absent(),
@@ -1928,15 +2135,53 @@ class $$DashcamClipsTableTableTableManager extends RootTableManager<
           }) =>
               DashcamClipsTableCompanion.insert(
             id: id,
+            tripId: tripId,
             path: path,
             createdAt: createdAt,
             isLocked: isLocked,
             sizeBytes: sizeBytes,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable(table),
+                    $$DashcamClipsTableTableReferences(db, table, e)
+                  ))
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({tripId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (tripId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.tripId,
+                    referencedTable:
+                        $$DashcamClipsTableTableReferences._tripIdTable(db),
+                    referencedColumn:
+                        $$DashcamClipsTableTableReferences._tripIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ));
 }
 
@@ -1949,13 +2194,9 @@ typedef $$DashcamClipsTableTableProcessedTableManager = ProcessedTableManager<
     $$DashcamClipsTableTableAnnotationComposer,
     $$DashcamClipsTableTableCreateCompanionBuilder,
     $$DashcamClipsTableTableUpdateCompanionBuilder,
-    (
-      DashcamClipsTableData,
-      BaseReferences<_$AppDatabase, $DashcamClipsTableTable,
-          DashcamClipsTableData>
-    ),
+    (DashcamClipsTableData, $$DashcamClipsTableTableReferences),
     DashcamClipsTableData,
-    PrefetchHooks Function()>;
+    PrefetchHooks Function({bool tripId})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2001,6 +2242,7 @@ class TripPointDaoManager {
 }
 
 mixin _$DashcamClipDaoMixin on DatabaseAccessor<AppDatabase> {
+  $TripsTableTable get tripsTable => attachedDatabase.tripsTable;
   $DashcamClipsTableTable get dashcamClipsTable =>
       attachedDatabase.dashcamClipsTable;
   DashcamClipDaoManager get managers => DashcamClipDaoManager(this);
@@ -2009,6 +2251,8 @@ mixin _$DashcamClipDaoMixin on DatabaseAccessor<AppDatabase> {
 class DashcamClipDaoManager {
   final _$DashcamClipDaoMixin _db;
   DashcamClipDaoManager(this._db);
+  $$TripsTableTableTableManager get tripsTable =>
+      $$TripsTableTableTableManager(_db.attachedDatabase, _db.tripsTable);
   $$DashcamClipsTableTableTableManager get dashcamClipsTable =>
       $$DashcamClipsTableTableTableManager(
           _db.attachedDatabase, _db.dashcamClipsTable);

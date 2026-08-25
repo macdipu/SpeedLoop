@@ -45,6 +45,9 @@ class DashcamClipsTable extends Table {
   String get tableName => 'dashcam_clips';
 
   IntColumn get id => integer().autoIncrement()();
+  IntColumn get tripId => integer()
+      .nullable()
+      .references(TripsTable, #id, onDelete: KeyAction.setNull)();
   TextColumn get path => text().unique()();
   DateTimeColumn get createdAt => dateTime()();
   BoolColumn get isLocked => boolean().withDefault(const Constant(false))();
@@ -64,13 +67,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async => m.createAll(),
         onUpgrade: (m, from, to) async {
           if (from < 2) await m.createTable(dashcamClipsTable);
+          if (from < 3) {
+            await m.addColumn(dashcamClipsTable, dashcamClipsTable.tripId);
+          }
         },
       );
 
@@ -151,6 +157,57 @@ class DashcamClipDao extends DatabaseAccessor<AppDatabase>
       (select(dashcamClipsTable)
             ..orderBy([(clip) => OrderingTerm.asc(clip.createdAt)]))
           .get();
+
+  Future<List<DashcamClipsTableData>> getClipsForTrip(int tripId) =>
+      (select(dashcamClipsTable)
+            ..where((clip) => clip.tripId.equals(tripId))
+            ..orderBy([(clip) => OrderingTerm.desc(clip.createdAt)]))
+          .get();
+
+  Future<Map<int, int>> getClipCountsForTrips(List<int> tripIds) async {
+    if (tripIds.isEmpty) return const {};
+
+    final countExpression = dashcamClipsTable.id.count();
+    final rows = await (selectOnly(dashcamClipsTable)
+          ..addColumns([dashcamClipsTable.tripId, countExpression])
+          ..where(dashcamClipsTable.tripId.isIn(tripIds))
+          ..groupBy([dashcamClipsTable.tripId]))
+        .get();
+
+    final counts = <int, int>{};
+    for (final row in rows) {
+      final tripId = row.read(dashcamClipsTable.tripId);
+      final count = row.read(countExpression);
+      if (tripId != null && count != null) {
+        counts[tripId] = count;
+      }
+    }
+    return counts;
+  }
+
+  Future<Map<int, int>> getLockedClipCountsForTrips(List<int> tripIds) async {
+    if (tripIds.isEmpty) return const {};
+
+    final countExpression = dashcamClipsTable.id.count();
+    final rows = await (selectOnly(dashcamClipsTable)
+          ..addColumns([dashcamClipsTable.tripId, countExpression])
+          ..where(
+            dashcamClipsTable.tripId.isIn(tripIds) &
+                dashcamClipsTable.isLocked.equals(true),
+          )
+          ..groupBy([dashcamClipsTable.tripId]))
+        .get();
+
+    final counts = <int, int>{};
+    for (final row in rows) {
+      final tripId = row.read(dashcamClipsTable.tripId);
+      final count = row.read(countExpression);
+      if (tripId != null && count != null) {
+        counts[tripId] = count;
+      }
+    }
+    return counts;
+  }
 
   Future<void> upsertClip(DashcamClipsTableCompanion clip) =>
       into(dashcamClipsTable).insertOnConflictUpdate(clip);

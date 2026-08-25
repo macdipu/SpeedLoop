@@ -5,10 +5,14 @@ library;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/utils/app_theme.dart';
 import '../../../../core/utils/gps_utils.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
+import '../../data/dashcam_clip_repository.dart';
+import '../widgets/clip_preview_sheet.dart';
 import '../controllers/dashcam_controller.dart';
 
 class DashcamScreen extends StatelessWidget {
@@ -16,6 +20,17 @@ class DashcamScreen extends StatelessWidget {
 
   final DashcamController controller = Get.find<DashcamController>();
   final SettingsController settings = Get.find<SettingsController>();
+
+  Future<void> _openClipLibrary(BuildContext context) async {
+    await controller.refreshSavedClips();
+    if (!context.mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ClipLibrarySheet(controller: controller),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,10 +109,46 @@ class DashcamScreen extends StatelessWidget {
                           label: controller.resolutionLabel.value,
                           color: Colors.white24,
                         )),
+                    const SizedBox(width: 8),
+                    Obx(() => IconButton(
+                          onPressed: () => _openClipLibrary(context),
+                          tooltip: 'Saved clips',
+                          style: IconButton.styleFrom(
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.1),
+                          ),
+                          icon: Badge.count(
+                            isLabelVisible: controller.savedClips.isNotEmpty,
+                            count: controller.savedClips.length,
+                            backgroundColor: AppColors.primary,
+                            textColor: Colors.black,
+                            child: const Icon(
+                              Icons.video_library_outlined,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        )),
                   ],
                 ),
               ),
             ),
+          ),
+
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 220,
+            child: Obx(() {
+              final message = controller.lastError.value;
+              if (message == null || message.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return _StatusBanner(
+                message: message,
+                isCritical: controller.isStorageFull.value,
+              );
+            }),
           ),
 
           // ── Bottom overlay (speed + loop info + controls) ───────────────
@@ -138,10 +189,19 @@ class DashcamScreen extends StatelessWidget {
                           }),
                           const Spacer(),
 
-                          // Lock toggle (only while recording)
-                          Obx(() => controller.isRecording.value
-                              ? _LockButton(controller: controller)
-                              : const SizedBox.shrink()),
+                          Obx(() {
+                            if (!controller.isRecording.value) {
+                              return const SizedBox.shrink();
+                            }
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _EventButton(controller: controller),
+                                const SizedBox(width: 10),
+                                _LockButton(controller: controller),
+                              ],
+                            );
+                          }),
                         ],
                       ),
                     ),
@@ -306,6 +366,493 @@ class _LoopInfoCard extends StatelessWidget {
         ),
       );
     });
+  }
+}
+
+class _StatusBanner extends StatelessWidget {
+  const _StatusBanner({
+    required this.message,
+    required this.isCritical,
+  });
+
+  final String message;
+  final bool isCritical;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = isCritical ? Colors.redAccent : Colors.orangeAccent;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.65)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isCritical ? Icons.warning_amber_rounded : Icons.info_outline,
+            color: accent,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _ClipFilter { all, locked, unlocked }
+
+class _ClipLibrarySheet extends StatefulWidget {
+  const _ClipLibrarySheet({required this.controller});
+
+  final DashcamController controller;
+
+  @override
+  State<_ClipLibrarySheet> createState() => _ClipLibrarySheetState();
+}
+
+class _ClipLibrarySheetState extends State<_ClipLibrarySheet> {
+  _ClipFilter _filter = _ClipFilter.all;
+
+  List<DashcamClipMetadata> _visibleClips(List<DashcamClipMetadata> clips) {
+    switch (_filter) {
+      case _ClipFilter.all:
+        return clips;
+      case _ClipFilter.locked:
+        return clips.where((clip) => clip.isLocked).toList();
+      case _ClipFilter.unlocked:
+        return clips.where((clip) => !clip.isLocked).toList();
+    }
+  }
+
+  String _storageLabel(int bytes) {
+    final megabytes = bytes / (1024 * 1024);
+    if (megabytes < 1024) return '${megabytes.toStringAsFixed(1)} MB';
+    return '${(megabytes / 1024).toStringAsFixed(2)} GB';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.68,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF111315),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Saved Clips',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Manage protected clips and storage usage',
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Obx(
+                      () => Text(
+                        '${widget.controller.savedClips.length} clips',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Obx(() {
+                final clips = widget.controller.savedClips;
+                final lockedCount = clips.where((clip) => clip.isLocked).length;
+                final totalBytes =
+                    clips.fold<int>(0, (sum, clip) => sum + clip.sizeBytes);
+                final lockedBytes = clips
+                    .where((clip) => clip.isLocked)
+                    .fold<int>(0, (sum, clip) => sum + clip.sizeBytes);
+
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _LibraryStatPill(
+                              label: 'Stored',
+                              value: _storageLabel(totalBytes),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _LibraryStatPill(
+                              label: 'Protected',
+                              value:
+                                  '$lockedCount • ${_storageLabel(lockedBytes)}',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _FilterChipButton(
+                              label: 'All',
+                              selected: _filter == _ClipFilter.all,
+                              onTap: () =>
+                                  setState(() => _filter = _ClipFilter.all),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _FilterChipButton(
+                              label: 'Locked',
+                              selected: _filter == _ClipFilter.locked,
+                              onTap: () =>
+                                  setState(() => _filter = _ClipFilter.locked),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _FilterChipButton(
+                              label: 'Unlocked',
+                              selected: _filter == _ClipFilter.unlocked,
+                              onTap: () => setState(
+                                  () => _filter = _ClipFilter.unlocked),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              Expanded(
+                child: Obx(() {
+                  final clips = _visibleClips(widget.controller.savedClips);
+                  if (clips.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          _filter == _ClipFilter.all
+                              ? 'No saved clips yet. Finalized dashcam segments will appear here.'
+                              : 'No clips match the current filter.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              color: Colors.white54, fontSize: 14),
+                        ),
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    controller: scrollController,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    itemCount: clips.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (_, index) => _ClipTile(
+                      controller: widget.controller,
+                      clip: clips[index],
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LibraryStatPill extends StatelessWidget {
+  const _LibraryStatPill({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white54, fontSize: 11),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterChipButton extends StatelessWidget {
+  const _FilterChipButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.18)
+              : Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? AppColors.primary : Colors.white10,
+          ),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: selected ? AppColors.primary : Colors.white70,
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ClipTile extends StatelessWidget {
+  const _ClipTile({required this.controller, required this.clip});
+
+  final DashcamController controller;
+  final DashcamClipMetadata clip;
+
+  @override
+  Widget build(BuildContext context) {
+    final sizeMb = clip.sizeBytes / (1024 * 1024);
+    final createdLabel = DateFormat('MMM d, HH:mm').format(clip.createdAt);
+    final filename = clip.path.split('/').last;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: clip.isLocked
+              ? Colors.amber.withValues(alpha: 0.5)
+              : Colors.white10,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                clip.isLocked ? Icons.lock : Icons.lock_open_outlined,
+                color: clip.isLocked ? Colors.amber : Colors.white38,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  filename,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                '${sizeMb.toStringAsFixed(1)} MB',
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            createdLabel,
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => ClipPreviewSheet(
+                        path: clip.path,
+                        title: filename,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.play_circle_outline, size: 16),
+                  label: const Text('Preview'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white24),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await controller.setClipLocked(clip.path, !clip.isLocked);
+                  },
+                  icon: Icon(
+                    clip.isLocked ? Icons.lock_open : Icons.lock,
+                    size: 16,
+                  ),
+                  label: Text(clip.isLocked ? 'Unlock' : 'Lock'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor:
+                        clip.isLocked ? Colors.amber : Colors.white,
+                    side: BorderSide(
+                      color: clip.isLocked ? Colors.amber : Colors.white24,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await Share.shareXFiles(
+                      [XFile(clip.path)],
+                      subject: 'SpeedLoop dashcam clip',
+                    );
+                  },
+                  icon: const Icon(Icons.share_outlined, size: 16),
+                  label: const Text('Share'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white24),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        backgroundColor: const Color(0xFF1A1D20),
+                        title: const Text('Delete clip'),
+                        content: const Text(
+                          'This deletes the saved video file from local storage.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(true),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true) {
+                      await controller.deleteSavedClip(clip.path);
+                    }
+                  },
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  label: const Text('Delete'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.red.withValues(alpha: 0.16),
+                    foregroundColor: Colors.red.shade200,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -477,6 +1024,45 @@ class _LockButton extends StatelessWidget {
         ),
       );
     });
+  }
+}
+
+class _EventButton extends StatelessWidget {
+  const _EventButton({required this.controller});
+
+  final DashcamController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: controller.markEvent,
+      child: Container(
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(26),
+          color: Colors.red.withValues(alpha: 0.18),
+          border: Border.all(color: Colors.redAccent.withValues(alpha: 0.7)),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.warning_amber_rounded,
+                color: Colors.redAccent, size: 18),
+            SizedBox(width: 6),
+            Text(
+              'EVENT',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
