@@ -5,6 +5,15 @@ import 'package:get/get.dart';
 
 import '../../../core/database/app_database.dart';
 
+enum DashcamIncidentType { manualEvent, severeBraking }
+
+extension DashcamIncidentTypeDisplay on DashcamIncidentType {
+  String get label => switch (this) {
+        DashcamIncidentType.manualEvent => 'Manual event',
+        DashcamIncidentType.severeBraking => 'Severe braking',
+      };
+}
+
 class DashcamClipMetadata {
   const DashcamClipMetadata({
     required this.path,
@@ -12,6 +21,7 @@ class DashcamClipMetadata {
     required this.isLocked,
     required this.sizeBytes,
     this.tripId,
+    this.incidentType,
   });
 
   final String path;
@@ -19,6 +29,7 @@ class DashcamClipMetadata {
   final bool isLocked;
   final int sizeBytes;
   final int? tripId;
+  final DashcamIncidentType? incidentType;
 }
 
 abstract class DashcamClipRepository {
@@ -48,6 +59,7 @@ class DriftDashcamClipRepository implements DashcamClipRepository {
             isLocked: row.isLocked,
             sizeBytes: row.sizeBytes,
             tripId: row.tripId,
+            incidentType: _parseIncidentType(row.incidentType),
           ),
         )
         .toList();
@@ -64,6 +76,7 @@ class DriftDashcamClipRepository implements DashcamClipRepository {
             isLocked: row.isLocked,
             sizeBytes: row.sizeBytes,
             tripId: row.tripId,
+            incidentType: _parseIncidentType(row.incidentType),
           ),
         )
         .toList();
@@ -86,6 +99,7 @@ class DriftDashcamClipRepository implements DashcamClipRepository {
           createdAt: drift.Value(metadata.createdAt),
           isLocked: drift.Value(metadata.isLocked),
           sizeBytes: drift.Value(metadata.sizeBytes),
+          incidentType: drift.Value(metadata.incidentType?.name),
         ),
       );
 
@@ -97,6 +111,16 @@ class DriftDashcamClipRepository implements DashcamClipRepository {
   @override
   Future<void> deleteMetadata(String path) async {
     await _database.dashcamClipDao.deleteByPath(path);
+  }
+
+  static DashcamIncidentType? _parseIncidentType(String? stored) {
+    if (stored == null) return null;
+    for (final type in DashcamIncidentType.values) {
+      if (type.name == stored) return type;
+    }
+    // Unknown values from a future app version must not make old clients fail
+    // to load or protect the associated recording.
+    return null;
   }
 }
 

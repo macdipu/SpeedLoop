@@ -100,6 +100,7 @@ class MemoryRepository implements DashcamClipRepository {
       isLocked: locked,
       sizeBytes: old.sizeBytes,
       tripId: old.tripId,
+      incidentType: old.incidentType,
     );
   }
 
@@ -255,6 +256,10 @@ void main() {
     controller.toggleLock();
     await controller.finalizeRecording();
     expect(repository.clips.values.single.isLocked, isTrue);
+    expect(
+      repository.clips.values.single.incidentType,
+      DashcamIncidentType.manualEvent,
+    );
   });
 
   test('mark event protects the current clip before finalization', () async {
@@ -262,6 +267,12 @@ void main() {
 
     controller.markEvent();
     expect(controller.isCurrentClipLocked.value, isTrue);
+
+    await controller.finalizeRecording();
+    expect(
+      repository.clips.values.single.incidentType,
+      DashcamIncidentType.severeBraking,
+    );
 
     await controller.finalizeRecording();
     expect(repository.clips.values.single.isLocked, isTrue);

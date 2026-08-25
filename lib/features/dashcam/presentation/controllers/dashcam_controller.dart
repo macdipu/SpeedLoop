@@ -74,6 +74,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
   double? _lastObservedSpeedKmh;
   DateTime? _lastObservedSpeedAt;
   DateTime? _lastAutoLockAt;
+  DashcamIncidentType? _currentIncidentType;
 
   @override
   void onInit() {
@@ -139,12 +140,15 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
   void toggleLock() {
     if (!isRecording.value) return;
     isCurrentClipLocked.value = !isCurrentClipLocked.value;
+    if (!isCurrentClipLocked.value) _currentIncidentType = null;
   }
 
   void markEvent({
     String message = 'Current clip marked and protected.',
+    DashcamIncidentType incidentType = DashcamIncidentType.manualEvent,
   }) {
     if (!isRecording.value) return;
+    _currentIncidentType = incidentType;
     if (!isCurrentClipLocked.value) {
       isCurrentClipLocked.value = true;
     }
@@ -186,7 +190,10 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
     }
 
     _lastAutoLockAt = observedAt;
-    markEvent(message: 'Severe braking detected. Current clip protected.');
+    markEvent(
+      message: 'Severe braking detected. Current clip protected.',
+      incidentType: DashcamIncidentType.severeBraking,
+    );
   }
 
   Future<void> setClipLocked(String path, bool locked) async {
@@ -252,6 +259,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       clipElapsedSeconds.value = 0;
       segmentCount.value = 0;
       isCurrentClipLocked.value = false;
+      _currentIncidentType = null;
       isSwitchingClip.value = false;
       isStorageFull.value = false;
       lastError.value = null;
@@ -283,7 +291,11 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       await _cycleFuture;
       if (_camera.isRecording) {
         final file = await _camera.stopRecording();
-        await _saveChunk(file, locked: isCurrentClipLocked.value);
+        await _saveChunk(
+          file,
+          locked: isCurrentClipLocked.value,
+          incidentType: _currentIncidentType,
+        );
       }
       final directory = await _directoryProvider();
       final result = await _storage.enforceQuota(
@@ -309,6 +321,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       _setError('Could not safely finalize the dashcam clip: $error');
     } finally {
       isCurrentClipLocked.value = false;
+      _currentIncidentType = null;
       isSwitchingClip.value = false;
       if (_ownsTripRecording && tripController.isRecording.value) {
         await tripController.stopTrip();
@@ -341,7 +354,11 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
     isSwitchingClip.value = true;
     try {
       final file = await _camera.stopRecording();
-      await _saveChunk(file, locked: isCurrentClipLocked.value);
+      await _saveChunk(
+        file,
+        locked: isCurrentClipLocked.value,
+        incidentType: _currentIncidentType,
+      );
       final directory = await _directoryProvider();
       final result = await _storage.enforceQuota(
         directory: directory,
@@ -382,6 +399,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       _clipStart = DateTime.now();
       clipElapsedSeconds.value = 0;
       isCurrentClipLocked.value = false;
+      _currentIncidentType = null;
       segmentCount.value++;
       _showSegmentToast();
       _scheduleCycleTimer(clipTotalSeconds.value);
@@ -395,7 +413,11 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _saveChunk(XFile source, {required bool locked}) async {
+  Future<void> _saveChunk(
+    XFile source, {
+    required bool locked,
+    required DashcamIncidentType? incidentType,
+  }) async {
     final directory = await _directoryProvider();
     final now = DateTime.now();
     final name = 'VID_${now.microsecondsSinceEpoch}.mp4';
@@ -408,6 +430,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
         createdAt: now,
         isLocked: locked,
         sizeBytes: await saved.length(),
+        incidentType: incidentType,
       ),
     );
     await refreshSavedClips();

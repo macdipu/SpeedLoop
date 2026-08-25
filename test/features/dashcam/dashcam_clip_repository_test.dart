@@ -22,6 +22,7 @@ void main() {
         createdAt: createdAt,
         isLocked: true,
         sizeBytes: 1234,
+        incidentType: DashcamIncidentType.severeBraking,
       ),
     );
     await database.close();
@@ -36,8 +37,13 @@ void main() {
     expect(restored.single.isLocked, isTrue);
     expect(restored.single.sizeBytes, 1234);
     expect(restored.single.tripId, 42);
+    expect(
+      restored.single.incidentType,
+      DashcamIncidentType.severeBraking,
+    );
     expect(byTrip, hasLength(1));
     expect(byTrip.single.path, clipPath);
+    expect(byTrip.single.incidentType, DashcamIncidentType.severeBraking);
 
     await database.close();
     await temporary.delete(recursive: true);

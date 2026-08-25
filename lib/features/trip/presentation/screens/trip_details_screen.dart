@@ -19,6 +19,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/gpx_utils.dart';
 import '../../../../core/utils/gps_utils.dart';
 import '../../../dashcam/data/dashcam_clip_repository.dart';
+import '../../../dashcam/presentation/widgets/clip_thumbnail.dart';
 import '../../../dashcam/presentation/widgets/clip_preview_sheet.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../domain/entities/trip_entity.dart';
@@ -501,6 +502,8 @@ class _TripClipTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ClipThumbnail(path: clip.path, height: 140),
+          const SizedBox(height: 12),
           Row(
             children: [
               Icon(
@@ -534,6 +537,18 @@ class _TripClipTile extends StatelessWidget {
             createdLabel,
             style: TextStyle(color: context.textSecondaryColor, fontSize: 12),
           ),
+          if (clip.incidentType case final incident?) ...[
+            const SizedBox(height: 8),
+            Text(
+              'INCIDENT · ${incident.label.toUpperCase()}',
+              style: const TextStyle(
+                color: Colors.redAccent,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Row(
             children: [

@@ -12,6 +12,7 @@ import '../../../../core/utils/app_theme.dart';
 import '../../../../core/utils/gps_utils.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../data/dashcam_clip_repository.dart';
+import '../widgets/clip_thumbnail.dart';
 import '../widgets/clip_preview_sheet.dart';
 import '../controllers/dashcam_controller.dart';
 
@@ -719,6 +720,8 @@ class _ClipTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ClipThumbnail(path: clip.path),
+          const SizedBox(height: 12),
           Row(
             children: [
               Icon(
@@ -749,6 +752,10 @@ class _ClipTile extends StatelessWidget {
             createdLabel,
             style: const TextStyle(color: Colors.white54, fontSize: 12),
           ),
+          if (clip.incidentType case final incident?) ...[
+            const SizedBox(height: 8),
+            _IncidentBadge(label: incident.label),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [
@@ -851,6 +858,33 @@ class _ClipTile extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _IncidentBadge extends StatelessWidget {
+  const _IncidentBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        'INCIDENT · ${label.toUpperCase()}',
+        style: TextStyle(
+          color: Colors.red.shade200,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
