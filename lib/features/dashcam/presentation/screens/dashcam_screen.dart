@@ -760,106 +760,115 @@ class _ClipTile extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    await showModalBottomSheet<void>(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => ClipPreviewSheet(
-                        path: clip.path,
-                        title: filename,
-                        incidentOffsetMs: clip.incidentOffsetMs,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final actionWidth = (constraints.maxWidth - 10) / 2;
+              return Wrap(
+                spacing: 10,
+                runSpacing: 8,
+                children: [
+                  SizedBox(
+                    width: actionWidth,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => ClipPreviewSheet(
+                            path: clip.path,
+                            title: filename,
+                            incidentOffsetMs: clip.incidentOffsetMs,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.play_circle_outline, size: 16),
+                      label: const Text('Preview'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white24),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.play_circle_outline, size: 16),
-                  label: const Text('Preview'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white24),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    await controller.setClipLocked(clip.path, !clip.isLocked);
-                  },
-                  icon: Icon(
-                    clip.isLocked ? Icons.lock_open : Icons.lock,
-                    size: 16,
-                  ),
-                  label: Text(clip.isLocked ? 'Unlock' : 'Lock'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor:
-                        clip.isLocked ? Colors.amber : Colors.white,
-                    side: BorderSide(
-                      color: clip.isLocked ? Colors.amber : Colors.white24,
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    await Share.shareXFiles(
-                      [XFile(clip.path)],
-                      subject: 'SpeedLoop dashcam clip',
-                    );
-                  },
-                  icon: const Icon(Icons.share_outlined, size: 16),
-                  label: const Text('Share'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white24),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (dialogContext) => AlertDialog(
-                        backgroundColor: const Color(0xFF1A1D20),
-                        title: const Text('Delete clip'),
-                        content: const Text(
-                          'This deletes the saved video file from local storage.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.of(dialogContext).pop(false),
-                            child: const Text('Cancel'),
-                          ),
-                          FilledButton(
-                            onPressed: () =>
-                                Navigator.of(dialogContext).pop(true),
-                            child: const Text('Delete'),
-                          ),
-                        ],
+                  SizedBox(
+                    width: actionWidth,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await controller.setClipLocked(
+                            clip.path, !clip.isLocked);
+                      },
+                      icon: Icon(
+                        clip.isLocked ? Icons.lock_open : Icons.lock,
+                        size: 16,
                       ),
-                    );
-                    if (confirmed == true) {
-                      await controller.deleteSavedClip(clip.path);
-                    }
-                  },
-                  icon: const Icon(Icons.delete_outline, size: 16),
-                  label: const Text('Delete'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.red.withValues(alpha: 0.16),
-                    foregroundColor: Colors.red.shade200,
+                      label: Text(clip.isLocked ? 'Unlock' : 'Lock'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor:
+                            clip.isLocked ? Colors.amber : Colors.white,
+                        side: BorderSide(
+                          color: clip.isLocked ? Colors.amber : Colors.white24,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                  SizedBox(
+                    width: actionWidth,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await Share.shareXFiles(
+                          [XFile(clip.path)],
+                          subject: 'SpeedLoop dashcam clip',
+                        );
+                      },
+                      icon: const Icon(Icons.share_outlined, size: 16),
+                      label: const Text('Share'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white24),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: actionWidth,
+                    child: FilledButton.icon(
+                      onPressed: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (dialogContext) => AlertDialog(
+                            backgroundColor: const Color(0xFF1A1D20),
+                            title: const Text('Delete clip'),
+                            content: const Text(
+                              'This deletes the saved video file from local storage.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(dialogContext).pop(false),
+                                child: const Text('Cancel'),
+                              ),
+                              FilledButton(
+                                onPressed: () =>
+                                    Navigator.of(dialogContext).pop(true),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmed == true) {
+                          await controller.deleteSavedClip(clip.path);
+                        }
+                      },
+                      icon: const Icon(Icons.delete_outline, size: 16),
+                      label: const Text('Delete'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.red.withValues(alpha: 0.16),
+                        foregroundColor: Colors.red.shade200,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),

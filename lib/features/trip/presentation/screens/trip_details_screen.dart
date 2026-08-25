@@ -551,49 +551,65 @@ class _TripClipTile extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 10),
-          Row(
-            children: [
-              OutlinedButton.icon(
-                onPressed: () async {
-                  await showModalBottomSheet<void>(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => ClipPreviewSheet(
-                      path: clip.path,
-                      title: filename,
-                      incidentOffsetMs: clip.incidentOffsetMs,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final actionWidth = (constraints.maxWidth - 10) / 2;
+              return Wrap(
+                spacing: 10,
+                runSpacing: 8,
+                children: [
+                  SizedBox(
+                    width: actionWidth,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => ClipPreviewSheet(
+                            path: clip.path,
+                            title: filename,
+                            incidentOffsetMs: clip.incidentOffsetMs,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.play_circle_outline, size: 16),
+                      label: const Text('Preview'),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.play_circle_outline, size: 16),
-                label: const Text('Preview'),
-              ),
-              const SizedBox(width: 10),
-              OutlinedButton.icon(
-                onPressed: onToggleLock,
-                icon: Icon(clip.isLocked ? Icons.lock_open : Icons.lock,
-                    size: 16),
-                label: Text(clip.isLocked ? 'Unlock' : 'Lock'),
-              ),
-              const SizedBox(width: 10),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  await Share.shareXFiles(
-                    [XFile(clip.path)],
-                    subject: 'SpeedLoop dashcam clip',
-                  );
-                },
-                icon: const Icon(Icons.share_outlined, size: 16),
-                label: const Text('Share'),
-              ),
-              const SizedBox(width: 10),
-              OutlinedButton.icon(
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline, size: 16),
-                label: const Text('Delete'),
-              ),
-            ],
+                  ),
+                  SizedBox(
+                    width: actionWidth,
+                    child: OutlinedButton.icon(
+                      onPressed: onToggleLock,
+                      icon: Icon(clip.isLocked ? Icons.lock_open : Icons.lock,
+                          size: 16),
+                      label: Text(clip.isLocked ? 'Unlock' : 'Lock'),
+                    ),
+                  ),
+                  SizedBox(
+                    width: actionWidth,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await Share.shareXFiles(
+                          [XFile(clip.path)],
+                          subject: 'SpeedLoop dashcam clip',
+                        );
+                      },
+                      icon: const Icon(Icons.share_outlined, size: 16),
+                      label: const Text('Share'),
+                    ),
+                  ),
+                  SizedBox(
+                    width: actionWidth,
+                    child: OutlinedButton.icon(
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline, size: 16),
+                      label: const Text('Delete'),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
