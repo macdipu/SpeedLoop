@@ -81,7 +81,7 @@ void main() {
     required DateTime createdAt,
     bool locked = false,
   }) async {
-    final file = File('${directory.path}/$name.mp4');
+    final file = File('${directory.path}${Platform.pathSeparator}$name.mp4');
     await file.writeAsBytes(List.filled(size, 1));
     await repository.upsert(
       DashcamClipMetadata(
@@ -153,11 +153,12 @@ void main() {
   });
 
   test('reconcile adds legacy files and removes only stale metadata', () async {
-    final legacy = File('${directory.path}/legacy.mp4');
+    final legacy =
+        File('${directory.path}${Platform.pathSeparator}legacy.mp4');
     await legacy.writeAsBytes([1, 2, 3]);
     await repository.upsert(
       DashcamClipMetadata(
-        path: '${directory.path}/missing.mp4',
+        path: '${directory.path}${Platform.pathSeparator}missing.mp4',
         createdAt: DateTime.utc(2020),
         isLocked: true,
         sizeBytes: 10,

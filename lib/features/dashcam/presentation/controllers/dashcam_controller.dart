@@ -454,7 +454,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
     final directory = await _directoryProvider();
     final now = DateTime.now();
     final name = 'VID_${now.microsecondsSinceEpoch}.mp4';
-    final destination = '${directory.path}/$name';
+    final destination = '${directory.path}${Platform.pathSeparator}$name';
     final saved = await File(source.path).rename(destination);
     await _clipRepository.upsert(
       DashcamClipMetadata(

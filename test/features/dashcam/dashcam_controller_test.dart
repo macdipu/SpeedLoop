@@ -45,7 +45,8 @@ class FakeCameraDriver implements DashcamCameraDriver {
   Future<XFile> stopRecording() async {
     stopCalls++;
     recording = false;
-    final source = File('${directory.path}/source_$stopCalls.tmp');
+    final source =
+        File('${directory.path}${Platform.pathSeparator}source_$stopCalls.tmp');
     await source.writeAsBytes([1, 2, 3]);
     return XFile(source.path);
   }
