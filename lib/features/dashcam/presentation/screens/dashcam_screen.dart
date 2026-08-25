@@ -754,7 +754,10 @@ class _ClipTile extends StatelessWidget {
           ),
           if (clip.incidentType case final incident?) ...[
             const SizedBox(height: 8),
-            _IncidentBadge(label: incident.label),
+            _IncidentBadge(
+              label: incident.label,
+              segment: clip.incidentSegment,
+            ),
           ],
           const SizedBox(height: 12),
           Row(
@@ -769,6 +772,7 @@ class _ClipTile extends StatelessWidget {
                       builder: (_) => ClipPreviewSheet(
                         path: clip.path,
                         title: filename,
+                        incidentOffsetMs: clip.incidentOffsetMs,
                       ),
                     );
                   },
@@ -864,9 +868,10 @@ class _ClipTile extends StatelessWidget {
 }
 
 class _IncidentBadge extends StatelessWidget {
-  const _IncidentBadge({required this.label});
+  const _IncidentBadge({required this.label, required this.segment});
 
   final String label;
+  final DashcamIncidentSegment? segment;
 
   @override
   Widget build(BuildContext context) {
@@ -878,7 +883,8 @@ class _IncidentBadge extends StatelessWidget {
         border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
       ),
       child: Text(
-        'INCIDENT · ${label.toUpperCase()}',
+        'INCIDENT · ${label.toUpperCase()}'
+        '${segment == null ? '' : ' · ${segment!.label.toUpperCase()}'}',
         style: TextStyle(
           color: Colors.red.shade200,
           fontSize: 10,

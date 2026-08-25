@@ -53,6 +53,10 @@ class DashcamClipsTable extends Table {
   BoolColumn get isLocked => boolean().withDefault(const Constant(false))();
   IntColumn get sizeBytes => integer().withDefault(const Constant(0))();
   TextColumn get incidentType => text().nullable()();
+  TextColumn get incidentId => text().nullable()();
+  DateTimeColumn get incidentAt => dateTime().nullable()();
+  IntColumn get incidentOffsetMs => integer().nullable()();
+  TextColumn get incidentSegment => text().nullable()();
 }
 
 // ---------------------------------------------------------------------------
@@ -68,7 +72,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -86,6 +90,24 @@ class AppDatabase extends _$AppDatabase {
               await m.addColumn(
                 dashcamClipsTable,
                 dashcamClipsTable.incidentType,
+              );
+            }
+            if (from < 5) {
+              await m.addColumn(
+                dashcamClipsTable,
+                dashcamClipsTable.incidentId,
+              );
+              await m.addColumn(
+                dashcamClipsTable,
+                dashcamClipsTable.incidentAt,
+              );
+              await m.addColumn(
+                dashcamClipsTable,
+                dashcamClipsTable.incidentOffsetMs,
+              );
+              await m.addColumn(
+                dashcamClipsTable,
+                dashcamClipsTable.incidentSegment,
               );
             }
           }

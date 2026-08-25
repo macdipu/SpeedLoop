@@ -5,15 +5,27 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+Duration incidentPreviewStart({
+  required int incidentOffsetMs,
+  required Duration duration,
+  Duration contextLead = const Duration(seconds: 2),
+}) {
+  final contextualStartMs = incidentOffsetMs - contextLead.inMilliseconds;
+  final boundedMs = contextualStartMs.clamp(0, duration.inMilliseconds).toInt();
+  return Duration(milliseconds: boundedMs);
+}
+
 class ClipPreviewSheet extends StatefulWidget {
   const ClipPreviewSheet({
     super.key,
     required this.path,
     required this.title,
+    this.incidentOffsetMs,
   });
 
   final String path;
   final String title;
+  final int? incidentOffsetMs;
 
   @override
   State<ClipPreviewSheet> createState() => _ClipPreviewSheetState();
@@ -27,7 +39,19 @@ class _ClipPreviewSheetState extends State<ClipPreviewSheet> {
   void initState() {
     super.initState();
     _controller = VideoPlayerController.file(File(widget.path));
-    _initializeFuture = _controller.initialize();
+    _initializeFuture = _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _controller.initialize();
+    final incidentOffsetMs = widget.incidentOffsetMs;
+    if (incidentOffsetMs == null) return;
+    await _controller.seekTo(
+      incidentPreviewStart(
+        incidentOffsetMs: incidentOffsetMs,
+        duration: _controller.value.duration,
+      ),
+    );
   }
 
   @override
@@ -92,6 +116,17 @@ class _ClipPreviewSheetState extends State<ClipPreviewSheet> {
                       ),
                     );
                   }
+                  if (snapshot.hasError) {
+                    return const AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: Center(
+                        child: Text(
+                          'This clip could not be opened.',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      ),
+                    );
+                  }
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(18),
                     child: AspectRatio(
@@ -104,6 +139,19 @@ class _ClipPreviewSheetState extends State<ClipPreviewSheet> {
                 },
               ),
               const SizedBox(height: 14),
+              if (widget.incidentOffsetMs case final offset?) ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Incident at ${_formatDuration(Duration(milliseconds: offset))}',
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+              ],
               ValueListenableBuilder<VideoPlayerValue>(
                 valueListenable: _controller,
                 builder: (context, value, _) {

@@ -101,6 +101,10 @@ class MemoryRepository implements DashcamClipRepository {
       sizeBytes: old.sizeBytes,
       tripId: old.tripId,
       incidentType: old.incidentType,
+      incidentId: old.incidentId,
+      incidentAt: old.incidentAt,
+      incidentOffsetMs: old.incidentOffsetMs,
+      incidentSegment: old.incidentSegment,
     );
   }
 
@@ -211,6 +215,7 @@ void main() {
       directoryProvider: () async => directory,
       settingsController: settings,
       injectedTripController: trip,
+      incidentIdGenerator: () => 'incident-test',
     );
     controller.onInit();
     await Future<void>.delayed(const Duration(milliseconds: 10));
@@ -273,7 +278,50 @@ void main() {
       repository.clips.values.single.incidentType,
       DashcamIncidentType.manualEvent,
     );
+    expect(repository.clips.values.single.incidentId, 'incident-test');
+    expect(
+      repository.clips.values.single.incidentSegment,
+      DashcamIncidentSegment.event,
+    );
+    expect(repository.clips.values.single.incidentOffsetMs, isNotNull);
     expect(repository.clips.values.single.isLocked, isTrue);
+  });
+
+  test('event protects and groups previous, current, and next segments',
+      () async {
+    await controller.toggleRecording();
+    await controller.cycleClipForTesting();
+
+    expect(repository.clips.values.single.isLocked, isFalse);
+    controller.markEvent();
+    await controller.cycleClipForTesting();
+    await controller.finalizeRecording();
+
+    final clips = repository.clips.values.toList();
+    expect(clips, hasLength(3));
+    expect(clips.every((clip) => clip.isLocked), isTrue);
+    expect(clips.map((clip) => clip.incidentId).toSet(), {'incident-test'});
+    expect(clips.map((clip) => clip.incidentSegment).toSet(), {
+      DashcamIncidentSegment.before,
+      DashcamIncidentSegment.event,
+      DashcamIncidentSegment.after,
+    });
+    final eventClip = clips.singleWhere(
+      (clip) => clip.incidentSegment == DashcamIncidentSegment.event,
+    );
+    expect(eventClip.incidentOffsetMs, isNotNull);
+    expect(eventClip.incidentAt, isNotNull);
+    expect(
+      clips.where(
+          (clip) => clip.incidentSegment != DashcamIncidentSegment.event),
+      everyElement(
+        isA<DashcamClipMetadata>().having(
+          (clip) => clip.incidentOffsetMs,
+          'incidentOffsetMs',
+          isNull,
+        ),
+      ),
+    );
   });
 
   test('severe deceleration auto-locks the current clip', () async {
@@ -289,6 +337,10 @@ void main() {
     expect(
       repository.clips.values.single.incidentType,
       DashcamIncidentType.severeBraking,
+    );
+    expect(
+      repository.clips.values.single.incidentSegment,
+      DashcamIncidentSegment.event,
     );
   });
 

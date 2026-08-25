@@ -7,7 +7,8 @@ import 'package:speedloop/features/dashcam/data/dashcam_clip_repository.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 void main() {
-  test('v3 migration preserves clips and adds nullable incident metadata',
+  test(
+      'v3 migration preserves clips and adds nullable incident window metadata',
       () async {
     final temporary = await Directory.systemTemp.createTemp('speedloop_db_v3_');
     final databaseFile = File('${temporary.path}/speedloop.sqlite');
@@ -38,6 +39,12 @@ void main() {
     expect(restored.single.path, '${temporary.path}/legacy.mp4');
     expect(restored.single.isLocked, isTrue);
     expect(restored.single.incidentType, isNull);
+    expect(restored.single.incidentId, isNull);
+    expect(restored.single.incidentAt, isNull);
+    expect(restored.single.incidentOffsetMs, isNull);
+    expect(restored.single.incidentSegment, isNull);
+
+    final occurredAt = DateTime.utc(2026, 8, 25, 12, 30);
 
     await repository.upsert(
       DashcamClipMetadata(
@@ -47,12 +54,21 @@ void main() {
         isLocked: true,
         sizeBytes: restored.single.sizeBytes,
         incidentType: DashcamIncidentType.manualEvent,
+        incidentId: 'migrated-incident',
+        incidentAt: occurredAt,
+        incidentOffsetMs: 1500,
+        incidentSegment: DashcamIncidentSegment.event,
       ),
     );
     expect(
       (await repository.getAll()).single.incidentType,
       DashcamIncidentType.manualEvent,
     );
+    final updated = (await repository.getAll()).single;
+    expect(updated.incidentId, 'migrated-incident');
+    expect(updated.incidentAt?.isAtSameMomentAs(occurredAt), isTrue);
+    expect(updated.incidentOffsetMs, 1500);
+    expect(updated.incidentSegment, DashcamIncidentSegment.event);
 
     await database.close();
     await temporary.delete(recursive: true);
@@ -64,6 +80,7 @@ void main() {
     final databaseFile = File('${temporary.path}/speedloop.sqlite');
     final clipPath = '${temporary.path}/protected.mp4';
     final createdAt = DateTime.utc(2026, 8, 25);
+    final incidentAt = DateTime.utc(2026, 8, 25, 0, 0, 12);
 
     var database = AppDatabase.forTesting(NativeDatabase(databaseFile));
     var repository = DriftDashcamClipRepository(database: database);
@@ -75,6 +92,10 @@ void main() {
         isLocked: true,
         sizeBytes: 1234,
         incidentType: DashcamIncidentType.severeBraking,
+        incidentId: 'incident-42',
+        incidentAt: incidentAt,
+        incidentOffsetMs: 12000,
+        incidentSegment: DashcamIncidentSegment.event,
       ),
     );
     await database.close();
@@ -93,9 +114,14 @@ void main() {
       restored.single.incidentType,
       DashcamIncidentType.severeBraking,
     );
+    expect(restored.single.incidentId, 'incident-42');
+    expect(restored.single.incidentAt?.isAtSameMomentAs(incidentAt), isTrue);
+    expect(restored.single.incidentOffsetMs, 12000);
+    expect(restored.single.incidentSegment, DashcamIncidentSegment.event);
     expect(byTrip, hasLength(1));
     expect(byTrip.single.path, clipPath);
     expect(byTrip.single.incidentType, DashcamIncidentType.severeBraking);
+    expect(byTrip.single.incidentId, 'incident-42');
 
     await database.close();
     await temporary.delete(recursive: true);

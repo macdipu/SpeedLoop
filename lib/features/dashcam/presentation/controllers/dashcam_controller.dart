@@ -5,6 +5,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../../trip/presentation/controllers/trip_controller.dart';
@@ -18,11 +19,13 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
     Future<Directory> Function()? directoryProvider,
     SettingsController? settingsController,
     TripController? injectedTripController,
+    String Function()? incidentIdGenerator,
   })  : _camera = cameraDriver ?? PluginDashcamCameraDriver(),
         _clipRepository = clipRepository ?? DriftDashcamClipRepository(),
         _directoryProvider = directoryProvider ?? _defaultDirectoryProvider,
         _injectedSettings = settingsController,
-        _injectedTripController = injectedTripController {
+        _injectedTripController = injectedTripController,
+        _incidentIdGenerator = incidentIdGenerator ?? const Uuid().v4 {
     _storage = DashcamStorageManager(repository: _clipRepository);
   }
 
@@ -39,6 +42,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
   final Future<Directory> Function() _directoryProvider;
   final SettingsController? _injectedSettings;
   final TripController? _injectedTripController;
+  final String Function() _incidentIdGenerator;
   late final DashcamStorageManager _storage;
 
   CameraController? get cameraController => _camera.previewController;
@@ -74,7 +78,10 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
   double? _lastObservedSpeedKmh;
   DateTime? _lastObservedSpeedAt;
   DateTime? _lastAutoLockAt;
-  DashcamIncidentType? _currentIncidentType;
+  _IncidentContext? _currentIncident;
+  _IncidentContext? _nextIncident;
+  String? _lastFinalizedClipPath;
+  Future<void>? _incidentProtectionFuture;
 
   @override
   void onInit() {
@@ -140,7 +147,10 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
   void toggleLock() {
     if (!isRecording.value) return;
     isCurrentClipLocked.value = !isCurrentClipLocked.value;
-    if (!isCurrentClipLocked.value) _currentIncidentType = null;
+    if (!isCurrentClipLocked.value) {
+      _currentIncident = null;
+      _nextIncident = null;
+    }
   }
 
   void markEvent({
@@ -148,9 +158,26 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
     DashcamIncidentType incidentType = DashcamIncidentType.manualEvent,
   }) {
     if (!isRecording.value) return;
-    _currentIncidentType = incidentType;
+    final now = DateTime.now();
+    final existing = _currentIncident;
+    final incidentId = existing?.id ?? _incidentIdGenerator();
+    final occurredAt = existing?.occurredAt ?? now;
+    final offsetMs = now.difference(_clipStart ?? now).inMilliseconds;
+    final incident = _IncidentContext(
+      id: incidentId,
+      type: incidentType,
+      occurredAt: occurredAt,
+      segment: DashcamIncidentSegment.event,
+      offsetMs: offsetMs < 0 ? 0 : offsetMs,
+    );
+    _currentIncident = incident;
+    _nextIncident = incident.forSegment(DashcamIncidentSegment.after);
     if (!isCurrentClipLocked.value) {
       isCurrentClipLocked.value = true;
+    }
+    final previousPath = _lastFinalizedClipPath;
+    if (previousPath != null) {
+      _queuePreviousSegmentProtection(previousPath, incident);
     }
     if (Get.context != null) {
       Get.rawSnackbar(
@@ -259,7 +286,9 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       clipElapsedSeconds.value = 0;
       segmentCount.value = 0;
       isCurrentClipLocked.value = false;
-      _currentIncidentType = null;
+      _currentIncident = null;
+      _nextIncident = null;
+      _lastFinalizedClipPath = null;
       isSwitchingClip.value = false;
       isStorageFull.value = false;
       lastError.value = null;
@@ -294,9 +323,10 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
         await _saveChunk(
           file,
           locked: isCurrentClipLocked.value,
-          incidentType: _currentIncidentType,
+          incident: _currentIncident,
         );
       }
+      await _flushIncidentProtection();
       final directory = await _directoryProvider();
       final result = await _storage.enforceQuota(
         directory: directory,
@@ -321,7 +351,8 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       _setError('Could not safely finalize the dashcam clip: $error');
     } finally {
       isCurrentClipLocked.value = false;
-      _currentIncidentType = null;
+      _currentIncident = null;
+      _nextIncident = null;
       isSwitchingClip.value = false;
       if (_ownsTripRecording && tripController.isRecording.value) {
         await tripController.stopTrip();
@@ -357,8 +388,9 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       await _saveChunk(
         file,
         locked: isCurrentClipLocked.value,
-        incidentType: _currentIncidentType,
+        incident: _currentIncident,
       );
+      await _flushIncidentProtection();
       final directory = await _directoryProvider();
       final result = await _storage.enforceQuota(
         directory: directory,
@@ -398,8 +430,9 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
       await _camera.startRecording();
       _clipStart = DateTime.now();
       clipElapsedSeconds.value = 0;
-      isCurrentClipLocked.value = false;
-      _currentIncidentType = null;
+      _currentIncident = _nextIncident;
+      _nextIncident = null;
+      isCurrentClipLocked.value = _currentIncident != null;
       segmentCount.value++;
       _showSegmentToast();
       _scheduleCycleTimer(clipTotalSeconds.value);
@@ -416,7 +449,7 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
   Future<void> _saveChunk(
     XFile source, {
     required bool locked,
-    required DashcamIncidentType? incidentType,
+    required _IncidentContext? incident,
   }) async {
     final directory = await _directoryProvider();
     final now = DateTime.now();
@@ -428,13 +461,70 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
         tripId: tripController.currentTripId.value,
         path: destination,
         createdAt: now,
-        isLocked: locked,
+        isLocked: locked || incident != null,
         sizeBytes: await saved.length(),
-        incidentType: incidentType,
+        incidentType: incident?.type,
+        incidentId: incident?.id,
+        incidentAt: incident?.occurredAt,
+        incidentOffsetMs: incident?.offsetMs,
+        incidentSegment: incident?.segment,
       ),
     );
+    _lastFinalizedClipPath = destination;
     await refreshSavedClips();
   }
+
+  void _queuePreviousSegmentProtection(
+    String path,
+    _IncidentContext incident,
+  ) {
+    final previous = _incidentProtectionFuture ?? Future<void>.value();
+    final protection = previous.then((_) async {
+      final matches = savedClips.where((clip) => clip.path == path);
+      if (matches.isEmpty) return;
+      final clip = matches.first;
+      // Never overwrite a separate incident already attached to the clip.
+      if (clip.incidentId != null && clip.incidentId != incident.id) return;
+      final segment = clip.incidentSegment == DashcamIncidentSegment.event
+          ? DashcamIncidentSegment.event
+          : DashcamIncidentSegment.before;
+      await _clipRepository.upsert(
+        clip.withIncident(
+          type: incident.type,
+          id: incident.id,
+          occurredAt: incident.occurredAt,
+          segment: segment,
+          offsetMs: segment == DashcamIncidentSegment.event
+              ? clip.incidentOffsetMs
+              : null,
+        ),
+      );
+      await refreshSavedClips();
+    });
+    _incidentProtectionFuture = protection;
+    unawaited(
+      protection.catchError((Object error, StackTrace stackTrace) {
+        _setError('Could not protect the preceding dashcam segment: $error');
+      }),
+    );
+  }
+
+  Future<void> _flushIncidentProtection() async {
+    final protection = _incidentProtectionFuture;
+    if (protection == null) return;
+    try {
+      await protection;
+    } catch (_) {
+      // The queued future reports the actionable error when it fails.
+    } finally {
+      if (identical(_incidentProtectionFuture, protection)) {
+        _incidentProtectionFuture = null;
+      }
+    }
+  }
+
+  @visibleForTesting
+  Future<void> cycleClipForTesting() => _cycleClip();
 
   Future<void> _applyStorageResult(DashcamStorageResult result) async {
     storageMbUsed.value = result.totalBytes / (1024 * 1024);
@@ -512,5 +602,30 @@ class DashcamController extends GetxController with WidgetsBindingObserver {
     final minutes = (totalSecs ~/ 60).toString().padLeft(2, '0');
     final seconds = (totalSecs % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+}
+
+class _IncidentContext {
+  const _IncidentContext({
+    required this.id,
+    required this.type,
+    required this.occurredAt,
+    required this.segment,
+    this.offsetMs,
+  });
+
+  final String id;
+  final DashcamIncidentType type;
+  final DateTime occurredAt;
+  final DashcamIncidentSegment segment;
+  final int? offsetMs;
+
+  _IncidentContext forSegment(DashcamIncidentSegment nextSegment) {
+    return _IncidentContext(
+      id: id,
+      type: type,
+      occurredAt: occurredAt,
+      segment: nextSegment,
+    );
   }
 }

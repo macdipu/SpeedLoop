@@ -7,10 +7,20 @@ import '../../../core/database/app_database.dart';
 
 enum DashcamIncidentType { manualEvent, severeBraking }
 
+enum DashcamIncidentSegment { before, event, after }
+
 extension DashcamIncidentTypeDisplay on DashcamIncidentType {
   String get label => switch (this) {
         DashcamIncidentType.manualEvent => 'Manual event',
         DashcamIncidentType.severeBraking => 'Severe braking',
+      };
+}
+
+extension DashcamIncidentSegmentDisplay on DashcamIncidentSegment {
+  String get label => switch (this) {
+        DashcamIncidentSegment.before => 'Before',
+        DashcamIncidentSegment.event => 'Event',
+        DashcamIncidentSegment.after => 'After',
       };
 }
 
@@ -22,6 +32,10 @@ class DashcamClipMetadata {
     required this.sizeBytes,
     this.tripId,
     this.incidentType,
+    this.incidentId,
+    this.incidentAt,
+    this.incidentOffsetMs,
+    this.incidentSegment,
   });
 
   final String path;
@@ -30,6 +44,31 @@ class DashcamClipMetadata {
   final int sizeBytes;
   final int? tripId;
   final DashcamIncidentType? incidentType;
+  final String? incidentId;
+  final DateTime? incidentAt;
+  final int? incidentOffsetMs;
+  final DashcamIncidentSegment? incidentSegment;
+
+  DashcamClipMetadata withIncident({
+    required DashcamIncidentType type,
+    required String id,
+    required DateTime occurredAt,
+    required DashcamIncidentSegment segment,
+    int? offsetMs,
+  }) {
+    return DashcamClipMetadata(
+      path: path,
+      createdAt: createdAt,
+      isLocked: true,
+      sizeBytes: sizeBytes,
+      tripId: tripId,
+      incidentType: type,
+      incidentId: id,
+      incidentAt: occurredAt,
+      incidentOffsetMs: offsetMs,
+      incidentSegment: segment,
+    );
+  }
 }
 
 abstract class DashcamClipRepository {
@@ -60,6 +99,10 @@ class DriftDashcamClipRepository implements DashcamClipRepository {
             sizeBytes: row.sizeBytes,
             tripId: row.tripId,
             incidentType: _parseIncidentType(row.incidentType),
+            incidentId: row.incidentId,
+            incidentAt: row.incidentAt,
+            incidentOffsetMs: row.incidentOffsetMs,
+            incidentSegment: _parseIncidentSegment(row.incidentSegment),
           ),
         )
         .toList();
@@ -77,6 +120,10 @@ class DriftDashcamClipRepository implements DashcamClipRepository {
             sizeBytes: row.sizeBytes,
             tripId: row.tripId,
             incidentType: _parseIncidentType(row.incidentType),
+            incidentId: row.incidentId,
+            incidentAt: row.incidentAt,
+            incidentOffsetMs: row.incidentOffsetMs,
+            incidentSegment: _parseIncidentSegment(row.incidentSegment),
           ),
         )
         .toList();
@@ -100,6 +147,10 @@ class DriftDashcamClipRepository implements DashcamClipRepository {
           isLocked: drift.Value(metadata.isLocked),
           sizeBytes: drift.Value(metadata.sizeBytes),
           incidentType: drift.Value(metadata.incidentType?.name),
+          incidentId: drift.Value(metadata.incidentId),
+          incidentAt: drift.Value(metadata.incidentAt),
+          incidentOffsetMs: drift.Value(metadata.incidentOffsetMs),
+          incidentSegment: drift.Value(metadata.incidentSegment?.name),
         ),
       );
 
@@ -120,6 +171,14 @@ class DriftDashcamClipRepository implements DashcamClipRepository {
     }
     // Unknown values from a future app version must not make old clients fail
     // to load or protect the associated recording.
+    return null;
+  }
+
+  static DashcamIncidentSegment? _parseIncidentSegment(String? stored) {
+    if (stored == null) return null;
+    for (final segment in DashcamIncidentSegment.values) {
+      if (segment.name == stored) return segment;
+    }
     return null;
   }
 }

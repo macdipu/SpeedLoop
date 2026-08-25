@@ -540,7 +540,8 @@ class _TripClipTile extends StatelessWidget {
           if (clip.incidentType case final incident?) ...[
             const SizedBox(height: 8),
             Text(
-              'INCIDENT · ${incident.label.toUpperCase()}',
+              'INCIDENT · ${incident.label.toUpperCase()}'
+              '${clip.incidentSegment == null ? '' : ' · ${clip.incidentSegment!.label.toUpperCase()}'}',
               style: const TextStyle(
                 color: Colors.redAccent,
                 fontSize: 11,
@@ -561,6 +562,7 @@ class _TripClipTile extends StatelessWidget {
                     builder: (_) => ClipPreviewSheet(
                       path: clip.path,
                       title: filename,
+                      incidentOffsetMs: clip.incidentOffsetMs,
                     ),
                   );
                 },
