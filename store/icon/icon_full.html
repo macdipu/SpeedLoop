@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;width:900px;height:900px;background:#0A0E1A;}
+  .canvas{position:relative;width:900px;height:900px;overflow:hidden;
+    background:radial-gradient(circle at 50% 38%, #131A2C 0%, #0A0E1A 62%, #060811 100%);}
+  svg{position:absolute;top:0;left:0;}
+</style>
+</head>
+<body>
+<div class="canvas">
+<svg width="900" height="900" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="arcGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00A882"/>
+      <stop offset="55%" stop-color="#00D4AA"/>
+      <stop offset="100%" stop-color="#4DFFCE"/>
+    </linearGradient>
+    <linearGradient id="needleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF9A63"/>
+      <stop offset="100%" stop-color="#FF6B2B"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- track (dim full circle guide) -->
+  <circle cx="512" cy="512" r="330" fill="none" stroke="#1C2438" stroke-width="46"
+    stroke-dasharray="1554 2073" stroke-dashoffset="-388" stroke-linecap="round"
+    transform="rotate(-215 512 512)"/>
+
+  <!-- active speed arc ~75% sweep -->
+  <circle cx="512" cy="512" r="330" fill="none" stroke="url(#arcGrad)" stroke-width="46"
+    stroke-dasharray="1165 2073" stroke-dashoffset="-388" stroke-linecap="round"
+    transform="rotate(-215 512 512)" filter="url(#glow)"/>
+
+  <!-- tick marks -->
+  <g stroke="#3A4560" stroke-width="7" stroke-linecap="round">
+    <line x1="512" y1="150" x2="512" y2="184"/>
+    <line x1="248" y1="300" x2="272" y2="322"/>
+    <line x1="776" y1="300" x2="752" y2="322"/>
+  </g>
+
+  <!-- needle -->
+  <g transform="rotate(52 512 512)">
+    <polygon points="512,300 534,540 512,568 490,540" fill="url(#needleGrad)"/>
+  </g>
+
+  <!-- hub -->
+  <circle cx="512" cy="512" r="46" fill="#0A0E1A" stroke="#4DFFCE" stroke-width="8"/>
+  <circle cx="512" cy="512" r="18" fill="#4DFFCE"/>
+</svg>
+</div>
+</body>
+</html>

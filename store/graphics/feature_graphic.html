@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;width:1024px;height:500px;}
+  .card{
+    width:1024px;height:500px;position:relative;overflow:hidden;
+    background:
+      radial-gradient(circle at 82% 20%, rgba(0,212,170,0.20) 0%, rgba(0,212,170,0) 45%),
+      radial-gradient(circle at 88% 85%, rgba(255,107,43,0.14) 0%, rgba(255,107,43,0) 40%),
+      linear-gradient(135deg, #0A0E1A 0%, #0D1224 55%, #0A0E1A 100%);
+    font-family:'Rajdhani',sans-serif;
+  }
+  .speedlines{position:absolute;top:0;right:-40px;bottom:0;width:520px;opacity:0.55;}
+  .mark{position:absolute;left:70px;top:50%;transform:translateY(-50%);width:220px;height:220px;}
+  .word{position:absolute;left:322px;top:158px;}
+  .name{font-size:92px;font-weight:700;color:#F2F4F8;letter-spacing:1px;line-height:1;margin:0;}
+  .name span{color:#00D4AA;}
+  .tag{font-family:'Roboto Mono',monospace;font-size:22px;font-weight:400;color:#8892B0;
+       letter-spacing:0.5px;margin-top:18px;text-transform:uppercase;}
+  .tag b{color:#FF9A63;font-weight:500;}
+</style>
+</head>
+<body>
+<div class="card">
+  <svg class="speedlines" viewBox="0 0 520 500" xmlns="http://www.w3.org/2000/svg">
+    <g stroke="#00D4AA" stroke-linecap="round" fill="none">
+      <path d="M60 90 L420 40" stroke-width="6" opacity="0.5"/>
+      <path d="M100 150 L480 108" stroke-width="10" opacity="0.7"/>
+      <path d="M40 220 L520 190" stroke-width="14" opacity="0.9"/>
+      <path d="M110 300 L470 280" stroke-width="8" opacity="0.55" stroke="#FF6B2B"/>
+      <path d="M70 380 L430 372" stroke-width="6" opacity="0.4"/>
+    </g>
+  </svg>
+
+  <svg class="mark" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="arcGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#00A882"/>
+        <stop offset="55%" stop-color="#00D4AA"/>
+        <stop offset="100%" stop-color="#4DFFCE"/>
+      </linearGradient>
+      <linearGradient id="needleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FF9A63"/>
+        <stop offset="100%" stop-color="#FF6B2B"/>
+      </linearGradient>
+    </defs>
+    <circle cx="512" cy="512" r="330" fill="none" stroke="#1C2438" stroke-width="46"
+      stroke-dasharray="1554 2073" stroke-dashoffset="-388" stroke-linecap="round"
+      transform="rotate(-215 512 512)"/>
+    <circle cx="512" cy="512" r="330" fill="none" stroke="url(#arcGrad)" stroke-width="46"
+      stroke-dasharray="1165 2073" stroke-dashoffset="-388" stroke-linecap="round"
+      transform="rotate(-215 512 512)"/>
+    <g transform="rotate(52 512 512)">
+      <polygon points="512,300 534,540 512,568 490,540" fill="url(#needleGrad)"/>
+    </g>
+    <circle cx="512" cy="512" r="46" fill="#0A0E1A" stroke="#4DFFCE" stroke-width="8"/>
+    <circle cx="512" cy="512" r="18" fill="#4DFFCE"/>
+  </svg>
+
+  <div class="word">
+    <p class="name">Speed<span>Loop</span></p>
+    <div class="tag">GPS Speedometer &nbsp;·&nbsp; Trip Log &nbsp;·&nbsp; <b>Dashcam</b></div>
+  </div>
+</div>
+</body>
+</html>

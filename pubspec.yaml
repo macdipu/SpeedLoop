@@ -60,6 +60,15 @@ dev_dependencies:
   drift_dev: ^2.18.0
   build_runner: ^2.4.12
   sqlite3: ^2.9.4
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "store/icon/icon_master.png"
+  adaptive_icon_background: "#0A0E1A"
+  adaptive_icon_foreground: "store/icon/icon_adaptive_fg.png"
+  remove_alpha_ios: true
 
 flutter:
   uses-material-design: true
