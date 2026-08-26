@@ -52,4 +52,4 @@ We may update this Privacy Policy from time to time. Changes will be posted on t
 Questions about this policy or your data can be sent to:
 
 **Chowdhury eLab**
-Email: [ADD YOUR SUPPORT EMAIL HERE]
+Email: c.dipu0@gmail.com

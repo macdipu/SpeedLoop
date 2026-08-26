@@ -147,10 +147,10 @@ jobs:
           TAG="${{ steps.tag.outputs.tag }}"
           for abi in arm64-v8a armeabi-v7a; do
             src="build/app/outputs/flutter-apk/app-$abi-release.apk"
-            [ -f "$src" ] && cp "$src" "release/muslim-deen-$abi-$TAG.apk"
+            [ -f "$src" ] && cp "$src" "release/speedloop-$abi-$TAG.apk"
           done
           cp build/app/outputs/bundle/release/app-release.aab \
-             "release/muslim-deen-$TAG.aab"
+             "release/speedloop-$TAG.aab"
           ls -lh release/
 
       - name: Create GitHub release
@@ -244,7 +244,7 @@ jobs:
           printf '%s' "$PLAY_JSON" > play-key.json
           trap 'rm -f play-key.json' EXIT
           fastlane supply \
-            --package_name com.chowdhuryelab.muslimdeen \
+            --package_name com.chowdhuryelab.speedloop \
             --aab build/app/outputs/bundle/release/app-release.aab \
             --track "${{ steps.playtrack.outputs.track }}" \
             --release_status completed \
