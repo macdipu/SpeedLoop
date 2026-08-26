@@ -157,6 +157,23 @@
   .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1);}
   .reveal.in{opacity:1;transform:translateY(0);}
 
+  /* SCREENSHOTS */
+  .shots-section{padding:20px 0 88px;}
+  .shot-scroll{
+    display:flex; gap:20px; overflow-x:auto; padding:8px 4px 20px;
+    scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;
+  }
+  .shot-scroll::-webkit-scrollbar{height:8px;}
+  .shot-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+  .shot-card{
+    flex:none; scroll-snap-align:start; width:230px;
+    border-radius:22px; overflow:hidden; border:1px solid var(--border);
+    box-shadow:0 24px 48px -28px rgba(0,0,0,.5);
+    transition:transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s ease;
+  }
+  .shot-card:hover{transform:translateY(-6px);box-shadow:0 32px 60px -28px rgba(0,0,0,.6);}
+  .shot-card img{width:100%; display:block;}
+
   /* FEATURES */
   .feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
   .feature-card{
@@ -254,6 +271,7 @@
       Speed<b>Loop</b>
     </a>
     <div class="nav-links">
+      <a href="#screenshots">Screenshots</a>
       <a href="#features">Features</a>
       <a href="#privacy">Privacy</a>
       <a href="#how">How it works</a>
@@ -295,6 +313,25 @@
     </div>
   </div>
 </header>
+
+<section class="shots-section" id="screenshots">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">SEE IT IN ACTION</p>
+      <h2>Straight from the app.</h2>
+      <p>Every screen below is a real capture, not a mockup drawn from scratch.</p>
+    </div>
+    <div class="shot-scroll">
+      <div class="shot-card"><img src="screenshots/1_speedometer.png" alt="SpeedLoop live speedometer screen" loading="lazy"></div>
+      <div class="shot-card"><img src="screenshots/2_map.png" alt="SpeedLoop live map screen" loading="lazy"></div>
+      <div class="shot-card"><img src="screenshots/3_trip_history.png" alt="SpeedLoop trip history and drive insights screen" loading="lazy"></div>
+      <div class="shot-card"><img src="screenshots/4_trip_details.png" alt="SpeedLoop trip route detail screen" loading="lazy"></div>
+      <div class="shot-card"><img src="screenshots/5_dashcam.png" alt="SpeedLoop dashcam recording screen" loading="lazy"></div>
+      <div class="shot-card"><img src="screenshots/6_hud_mode.png" alt="SpeedLoop mirrored HUD mode screen" loading="lazy"></div>
+      <div class="shot-card"><img src="screenshots/7_settings.png" alt="SpeedLoop settings screen" loading="lazy"></div>
+    </div>
+  </div>
+</section>
 
 <section id="features">
   <div class="wrap">
