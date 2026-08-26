@@ -187,7 +187,7 @@ class _LiveTripMapState extends State<_LiveTripMap> {
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
             userAgentPackageName: 'com.chowdhuryelab.speedloop',
           ),
-          flutter_map.RichAttributionWidget(
+          const flutter_map.RichAttributionWidget(
             attributions: [
               flutter_map.TextSourceAttribution('OpenStreetMap contributors'),
             ],

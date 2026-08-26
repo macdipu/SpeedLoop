@@ -226,7 +226,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.chowdhuryelab.speedloop',
                 ),
-                RichAttributionWidget(
+                const RichAttributionWidget(
                   attributions: [
                     TextSourceAttribution('OpenStreetMap contributors'),
                   ],
