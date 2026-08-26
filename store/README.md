@@ -25,12 +25,16 @@ store/
 
 ## Published pages (fill these into Play Console)
 
-- **Landing page / website**: https://claude.ai/code/artifact/5bb481a1-f0a0-403b-b2cd-5d63db4b35f6
-- **Privacy Policy URL**: https://claude.ai/code/artifact/49d7bd5f-0802-488d-96e5-ec8dc59434dd
+Hosted on **GitHub Pages** from this repo, source in `docs/`:
 
-Both are private by default. Before you submit, open each and use the page's share menu to make it public — Play Console requires a URL Google can actually crawl. For a permanent setup, point your own domain at this content (e.g. host the two HTML files on GitHub Pages) rather than relying on the artifact link long-term.
+- **Landing page / website**: https://macdipu.github.io/SpeedLoop/
+- **Privacy Policy URL**: https://macdipu.github.io/SpeedLoop/privacy.html
 
-Both pages still have a placeholder for your support email — search `[ADD YOUR SUPPORT EMAIL HERE]` in `privacy.html` and republish before going live.
+`docs/` has been committed and pushed to `origin/main`, but GitHub Pages still needs one manual toggle before the URLs go live: repo **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main` / `docs`→ Save**. It goes live within a minute or two of saving.
+
+(A quick-preview copy of the same two pages was also published as a Claude Artifact during drafting — `store/landing/index.html` and `privacy.html` — kept only as design source, not the canonical public URL anymore.)
+
+Both pages still have a placeholder for your support email — search `[ADD YOUR SUPPORT EMAIL HERE]` in `docs/privacy.html` and push again before going fully live.
 
 ## App icon — done, wired up
 

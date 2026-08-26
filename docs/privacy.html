@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpeedLoop Privacy Policy</title>
+<meta name="description" content="Privacy policy for the SpeedLoop GPS speedometer, trip log & dashcam app.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Roboto+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F2F4F8;--surface:#FFFFFF;--border:#DDE3ED;
+    --text:#1A202C;--text-2:#5B6478;--text-3:#8892B0;--teal:#00A882;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0A0E1A;--surface:#111729;--border:#232B45;
+      --text:#EDEFF6;--text-2:#AEB6CC;--text-3:#8892B0;--teal:#00D4AA;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0A0E1A;--surface:#111729;--border:#232B45;
+    --text:#EDEFF6;--text-2:#AEB6CC;--text-3:#8892B0;--teal:#00D4AA;
+  }
+  *{box-sizing:border-box;}
+  html{color-scheme:light dark;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Manrope',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 28px;}
+
+  nav{border-bottom:1px solid var(--border);}
+  .nav-row{display:flex;align-items:center;justify-content:space-between;height:68px;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:21px;text-decoration:none;color:var(--text);}
+  .brand svg{width:28px;height:28px;flex:none;}
+  .brand b{color:var(--teal);font-weight:700;}
+  .back{font-family:'Roboto Mono',monospace;font-size:13px;color:var(--text-2);text-decoration:none;display:flex;align-items:center;gap:6px;}
+  .back:hover{color:var(--teal);}
+
+  main{padding:64px 0 100px;}
+  .eyebrow{font-family:'Roboto Mono',monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin:0 0 12px;}
+  h1{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:38px;margin:0;text-wrap:balance;}
+  .updated{font-family:'Roboto Mono',monospace;font-size:12.5px;color:var(--text-3);margin:10px 0 44px;display:block;}
+  h2{font-family:'Manrope',sans-serif;font-weight:700;font-size:19px;margin:38px 0 10px;color:var(--text);}
+  p,li{font-size:15.5px;line-height:1.7;color:var(--text-2);}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;}
+  th{text-align:left;font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-3);
+     padding:0 12px 10px 0;border-bottom:1px solid var(--border);font-weight:600;font-family:'Roboto Mono',monospace;}
+  td{padding:12px 12px 12px 0;border-bottom:1px solid var(--border);color:var(--text-2);vertical-align:top;}
+  a.link{color:var(--teal);text-decoration:underline;}
+  code{font-family:'Roboto Mono',monospace;font-size:14px;background:var(--surface);border:1px solid var(--border);padding:1px 6px;border-radius:4px;}
+
+  footer{padding:40px 0;border-top:1px solid var(--border);}
+  .copyright{font-size:12.5px;color:var(--text-3);font-family:'Roboto Mono',monospace;}
+
+  @media (max-width:560px){h1{font-size:30px;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-row">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 100 100"><defs><linearGradient id="navg" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0%" stop-color="#00A882"/><stop offset="100%" stop-color="#4DFFCE"/></linearGradient></defs>
+        <circle cx="50" cy="50" r="32" fill="none" stroke="url(#navg)" stroke-width="9"
+          stroke-dasharray="151 202" stroke-dashoffset="-38" stroke-linecap="round" transform="rotate(-215 50 50)"/>
+        <polygon points="50,29 55,54 50,58 45,54" fill="#FF8A4C" transform="rotate(52 50 50)"/>
+        <circle cx="50" cy="50" r="6" fill="#4DFFCE"/>
+      </svg>
+      Speed<b>Loop</b>
+    </a>
+    <a class="back" href="index.html">← Back to site</a>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+    <p class="eyebrow">LEGAL</p>
+    <h1>Privacy Policy</h1>
+    <span class="updated">Last updated: August 26, 2026</span>
+
+    <p>Chowdhury eLab ("we", "us", "our") built the SpeedLoop app ("the App") as a free, offline-first GPS speedometer, trip recorder, and dashcam. This policy explains what data the App accesses, how it is used, and your choices.</p>
+
+    <h2>Summary</h2>
+    <p>SpeedLoop is designed to work entirely on your device. Trip history, GPS tracks, and dashcam recordings are stored locally in the App's private storage and are never uploaded to our servers, because we don't operate any servers that receive your data. We do not sell data, run ads, or use third-party analytics or advertising SDKs.</p>
+
+    <h2>Information the App accesses</h2>
+    <table>
+      <tr><th>Data</th><th>Why it's accessed</th><th>Where it goes</th></tr>
+      <tr><td>Precise location (GPS)</td><td>Live speed, route recording, live map position</td><td>Stays in the local trip database on your device. Visible map area is sent to OpenStreetMap tile servers to draw imagery — see below.</td></tr>
+      <tr><td>Camera</td><td>Dashcam video with speed/location/time overlay, only while recording</td><td>Written to local app storage. Never transmitted by us.</td></tr>
+      <tr><td>Microphone</td><td>Audio in dashcam clips, only while recording</td><td>Stored locally in the video file only.</td></tr>
+      <tr><td>Notifications</td><td>Persistent status while a trip records in the background (required by Android)</td><td>Local only.</td></tr>
+    </table>
+    <p>We do not access contacts, photos outside the app's own dashcam folder, messages, or any other app's data.</p>
+
+    <h2>Background location</h2>
+    <p>SpeedLoop can keep recording your trip after you lock the screen or switch apps, but only after you tap "Start Trip." This uses an Android foreground service with a visible, persistent notification — not the special "background location" permission — so the App never tracks you without an active recording session, and you can stop it anytime from the notification or in-app.</p>
+
+    <h2>Map tiles (OpenStreetMap)</h2>
+    <p>The in-app map uses free tiles from OpenStreetMap. Displaying the map sends the coordinates of the visible area to <code>tile.openstreetmap.org</code> over HTTPS, the same way any map app fetches imagery — governed by the <a class="link" href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">OpenStreetMap Privacy Policy</a>. We don't attach your identity to these requests beyond what's inherent to any internet request.</p>
+
+    <h2>Data you choose to export or share</h2>
+    <p>Trips can be exported as .gpx and dashcam clips shared via your device's native share sheet, only when you tap Export or Share — sent only to the destination you pick. SpeedLoop never automatically uploads or transmits this data.</p>
+
+    <h2>Data storage and deletion</h2>
+    <p>All trip records, GPS tracks, and dashcam clips are stored locally on your device. Delete individual trips or clips in-app, or clear everything via Android Settings → Apps → SpeedLoop → Storage → Clear Data, or by uninstalling the App.</p>
+
+    <h2>Children's privacy</h2>
+    <p>SpeedLoop is not directed at children under 13 and we do not knowingly collect information from children.</p>
+
+    <h2>Third-party services</h2>
+    <p>The only third-party service the App communicates with is the OpenStreetMap tile service described above, used solely to display map imagery. SpeedLoop integrates no advertising, analytics, or crash-reporting SDKs.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>We may update this Privacy Policy from time to time. Changes are posted on this page with an updated "Last updated" date.</p>
+
+    <h2>Contact us</h2>
+    <p>Chowdhury eLab<br>Email: [ADD YOUR SUPPORT EMAIL HERE]</p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="copyright">© 2026 Chowdhury eLab. SpeedLoop is not affiliated with OpenStreetMap.</div>
+  </div>
+</footer>
+</body>
+</html>

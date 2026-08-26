@@ -53,10 +53,10 @@ Answer every questionnaire section honestly based on the above — the App doesn
 
 ## Contact details (Play Console → Store presence → Store settings)
 - Email: [ADD YOUR SUPPORT EMAIL]
-- Website: https://claude.ai/code/artifact/5bb481a1-f0a0-403b-b2cd-5d63db4b35f6 (landing page, private until shared — see "Publishing" note below)
-- Privacy Policy URL: https://claude.ai/code/artifact/49d7bd5f-0802-488d-96e5-ec8dc59434dd (standalone page, private until shared)
+- Website: https://macdipu.github.io/SpeedLoop/ (GitHub Pages, source: `docs/index.html`)
+- Privacy Policy URL: https://macdipu.github.io/SpeedLoop/privacy.html (source: `docs/privacy.html`)
 
-**Publishing note:** both artifact links are private by default. Before submitting to Play Console, open each link and use its share menu to make it public — Google's reviewers and the Data Safety form both require a publicly reachable URL. For a permanent setup, consider pointing your own domain at this content instead (e.g. GitHub Pages) since artifact links, while stable, aren't meant as long-term production hosting.
+**One manual step required:** GitHub Pages isn't enabled by a `git push` alone — go to the repo's **Settings → Pages**, set "Build and deployment: Source" to **Deploy from a branch**, branch **main**, folder **/docs**, then Save. The site goes live at the URL above a minute or two later. (A Claude.ai preview of the same pages also exists — see `store/landing/` — but the URLs above are the ones to use in Play Console.)
 
 ## Target audience & content
 - Target age group: 18+ recommended (driving app), but Play may still require the full content rating questionnaire regardless.
