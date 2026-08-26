@@ -1,0 +1,1 @@
+Initial release: GPS speedometer, trip recording, loop-recording dashcam, speed limit alerts, and GPX export/import.
