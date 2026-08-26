@@ -177,19 +177,6 @@
   .cta h2{font-size:clamp(26px,3.6vw,38px);margin-bottom:14px;}
   .cta p{color:var(--text-2);font-size:16px;margin-bottom:30px;}
 
-  /* PRIVACY POLICY DOC */
-  .policy{background:var(--surface);border-top:1px solid var(--border);}
-  .policy .wrap{max-width:760px;}
-  .policy h2.doc-title{font-size:30px;margin-bottom:6px;}
-  .policy .updated{font-family:'Roboto Mono',monospace;font-size:12.5px;color:var(--text-3);margin-bottom:36px;display:block;}
-  .policy h3{font-family:'Manrope',sans-serif;font-weight:700;font-size:19px;margin:34px 0 10px;color:var(--text);}
-  .policy p, .policy li{font-size:15.5px;line-height:1.7;color:var(--text-2);}
-  .policy table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;}
-  .policy th{text-align:left;font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-3);
-    padding:0 12px 10px 0;border-bottom:1px solid var(--border);font-weight:600;font-family:'Roboto Mono',monospace;}
-  .policy td{padding:12px 12px 12px 0;border-bottom:1px solid var(--border);color:var(--text-2);vertical-align:top;}
-  .policy a.link{color:var(--teal);text-decoration:underline;}
-
   footer{padding:50px 0;border-top:1px solid var(--border);}
   .footer-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;}
   .footer-row .brand{font-size:17px;}
@@ -228,7 +215,7 @@
       <a href="#features">Features</a>
       <a href="#privacy">Privacy</a>
       <a href="#how">How it works</a>
-      <a href="#policy">Privacy Policy</a>
+      <a href="https://claude.ai/code/artifact/49d7bd5f-0802-488d-96e5-ec8dc59434dd">Privacy Policy</a>
     </div>
     <a class="nav-cta" href="#get">GET THE APP</a>
   </div>
@@ -356,60 +343,13 @@
   </div>
 </section>
 
-<section class="policy" id="policy">
-  <div class="wrap">
-    <p class="eyebrow">LEGAL</p>
-    <h2 class="doc-title">SpeedLoop Privacy Policy</h2>
-    <span class="updated">Last updated: August 26, 2026</span>
-
-    <p>Chowdhury eLab ("we", "us", "our") built the SpeedLoop app ("the App") as a free, offline-first GPS speedometer, trip recorder, and dashcam. This policy explains what data the App accesses, how it is used, and your choices.</p>
-
-    <h3>Summary</h3>
-    <p>SpeedLoop is designed to work entirely on your device. Trip history, GPS tracks, and dashcam recordings are stored locally in the App's private storage and are never uploaded to our servers, because we don't operate any servers that receive your data. We do not sell data, run ads, or use third-party analytics or advertising SDKs.</p>
-
-    <h3>Information the App accesses</h3>
-    <table>
-      <tr><th>Data</th><th>Why it's accessed</th><th>Where it goes</th></tr>
-      <tr><td>Precise location (GPS)</td><td>Live speed, route recording, live map position</td><td>Stays in the local trip database on your device. Visible map area is sent to OpenStreetMap tile servers to draw imagery — see below.</td></tr>
-      <tr><td>Camera</td><td>Dashcam video with speed/location/time overlay, only while recording</td><td>Written to local app storage. Never transmitted by us.</td></tr>
-      <tr><td>Microphone</td><td>Audio in dashcam clips, only while recording</td><td>Stored locally in the video file only.</td></tr>
-      <tr><td>Notifications</td><td>Persistent status while a trip records in the background (required by Android)</td><td>Local only.</td></tr>
-    </table>
-    <p>We do not access contacts, photos outside the app's own dashcam folder, messages, or any other app's data.</p>
-
-    <h3>Background location</h3>
-    <p>SpeedLoop can keep recording your trip after you lock the screen or switch apps, but only after you tap "Start Trip." This uses an Android foreground service with a visible, persistent notification — not the special "background location" permission — so the App never tracks you without an active recording session, and you can stop it anytime from the notification or in-app.</p>
-
-    <h3>Map tiles (OpenStreetMap)</h3>
-    <p>The in-app map uses free tiles from OpenStreetMap. Displaying the map sends the coordinates of the visible area to <code>tile.openstreetmap.org</code> over HTTPS, the same way any map app fetches imagery — governed by the <a class="link" href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">OpenStreetMap Privacy Policy</a>. We don't attach your identity to these requests beyond what's inherent to any internet request.</p>
-
-    <h3>Data you choose to export or share</h3>
-    <p>Trips can be exported as .gpx and dashcam clips shared via your device's native share sheet, only when you tap Export or Share — sent only to the destination you pick. SpeedLoop never automatically uploads or transmits this data.</p>
-
-    <h3>Data storage and deletion</h3>
-    <p>All trip records, GPS tracks, and dashcam clips are stored locally on your device. Delete individual trips or clips in-app, or clear everything via Android Settings → Apps → SpeedLoop → Storage → Clear Data, or by uninstalling the App.</p>
-
-    <h3>Children's privacy</h3>
-    <p>SpeedLoop is not directed at children under 13 and we do not knowingly collect information from children.</p>
-
-    <h3>Third-party services</h3>
-    <p>The only third-party service the App communicates with is the OpenStreetMap tile service described above, used solely to display map imagery. SpeedLoop integrates no advertising, analytics, or crash-reporting SDKs.</p>
-
-    <h3>Changes to this policy</h3>
-    <p>We may update this Privacy Policy from time to time. Changes are posted on this page with an updated "Last updated" date.</p>
-
-    <h3>Contact us</h3>
-    <p>Chowdhury eLab<br>Email: [ADD YOUR SUPPORT EMAIL HERE]</p>
-  </div>
-</section>
-
 <footer>
   <div class="wrap">
     <div class="footer-row">
       <div class="brand">Speed<b>Loop</b></div>
       <div class="foot-links">
         <a href="#features">Features</a>
-        <a href="#policy">Privacy Policy</a>
+        <a href="https://claude.ai/code/artifact/49d7bd5f-0802-488d-96e5-ec8dc59434dd">Privacy Policy</a>
         <a href="mailto:">Contact</a>
       </div>
     </div>

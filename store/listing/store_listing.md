@@ -53,8 +53,10 @@ Answer every questionnaire section honestly based on the above — the App doesn
 
 ## Contact details (Play Console → Store presence → Store settings)
 - Email: [ADD YOUR SUPPORT EMAIL]
-- Website: [ADD LANDING PAGE URL] (published — see store/landing/index.html)
-- Privacy Policy URL: [ADD HOSTED PRIVACY POLICY URL] (content ready in store/listing/privacy_policy.md — must be hosted at a public URL Google can crawl; the published landing page includes it)
+- Website: https://claude.ai/code/artifact/5bb481a1-f0a0-403b-b2cd-5d63db4b35f6 (landing page, private until shared — see "Publishing" note below)
+- Privacy Policy URL: https://claude.ai/code/artifact/49d7bd5f-0802-488d-96e5-ec8dc59434dd (standalone page, private until shared)
+
+**Publishing note:** both artifact links are private by default. Before submitting to Play Console, open each link and use its share menu to make it public — Google's reviewers and the Data Safety form both require a publicly reachable URL. For a permanent setup, consider pointing your own domain at this content instead (e.g. GitHub Pages) since artifact links, while stable, aren't meant as long-term production hosting.
 
 ## Target audience & content
 - Target age group: 18+ recommended (driving app), but Play may still require the full content rating questionnaire regardless.
