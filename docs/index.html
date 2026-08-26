@@ -179,6 +179,18 @@
   .section-head h2{font-size:clamp(28px,3.4vw,40px);}
   .section-head p{color:var(--text-2);font-size:17px;line-height:1.6;margin-top:14px;}
 
+  /* Grow-in-on-scroll banner (Citytouch-style scale reveal), used for the features intro */
+  .feature-banner{
+    max-width:100%;margin:0 0 52px;padding:56px 40px;border-radius:28px;text-align:center;
+    background:linear-gradient(135deg, var(--teal), color-mix(in srgb, var(--teal) 45%, var(--code-bg)));
+    box-shadow:0 30px 60px -30px color-mix(in srgb, var(--teal) 55%, transparent);
+  }
+  .feature-banner .eyebrow{color:#04140F;opacity:.7;}
+  .feature-banner h2{color:#04140F;}
+  .feature-banner p{color:color-mix(in srgb, #04140F 78%, transparent);max-width:52ch;margin-left:auto;margin-right:auto;}
+  .scroll-scale{opacity:0;transform:scale(.88);will-change:transform,opacity;}
+  @media (prefers-reduced-motion: reduce){ .scroll-scale{opacity:1 !important;transform:none !important;} }
+
   /* reveal-on-scroll */
   .reveal{
     opacity:0;transform:translateY(38px) scale(.95);filter:blur(7px);
@@ -189,19 +201,20 @@
   /* SCREENSHOTS */
   .shots-section{padding:20px 0 88px;position:relative;overflow:hidden;}
   .shot-scroll{
-    display:flex; gap:20px; overflow-x:auto; padding:8px 4px 20px;
+    display:flex; gap:20px; overflow-x:auto; padding:36px 4px 48px;
     scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;
   }
   .shot-scroll::-webkit-scrollbar{height:8px;}
   .shot-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+  .shot-parallax{flex:none; scroll-snap-align:start; width:230px; will-change:transform;}
   .shot-card{
-    flex:none; scroll-snap-align:start; width:230px;
     border-radius:22px; overflow:hidden; border:1px solid var(--border);
     box-shadow:0 24px 48px -28px rgba(0,0,0,.5);
     transition:transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s ease;
   }
   .shot-card:hover{transform:translateY(-6px);box-shadow:0 32px 60px -28px rgba(0,0,0,.6);}
   .shot-card img{width:100%; display:block;}
+  @media (prefers-reduced-motion: reduce){ .shot-parallax{transform:none !important;} }
 
   /* FEATURES */
   .feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
@@ -360,13 +373,13 @@
       <p>Every screen below is a real capture, not a mockup drawn from scratch.</p>
     </div>
     <div class="shot-scroll">
-      <div class="shot-card"><img src="screenshots/1_speedometer.png" alt="SpeedLoop live speedometer screen" loading="lazy"></div>
-      <div class="shot-card"><img src="screenshots/2_map.png" alt="SpeedLoop live map screen" loading="lazy"></div>
-      <div class="shot-card"><img src="screenshots/3_trip_history.png" alt="SpeedLoop trip history and drive insights screen" loading="lazy"></div>
-      <div class="shot-card"><img src="screenshots/4_trip_details.png" alt="SpeedLoop trip route detail screen" loading="lazy"></div>
-      <div class="shot-card"><img src="screenshots/5_dashcam.png" alt="SpeedLoop dashcam recording screen" loading="lazy"></div>
-      <div class="shot-card"><img src="screenshots/6_hud_mode.png" alt="SpeedLoop mirrored HUD mode screen" loading="lazy"></div>
-      <div class="shot-card"><img src="screenshots/7_settings.png" alt="SpeedLoop settings screen" loading="lazy"></div>
+      <div class="shot-parallax" data-speed="0.07"><div class="shot-card"><img src="screenshots/1_speedometer.png" alt="SpeedLoop live speedometer screen" loading="lazy"></div></div>
+      <div class="shot-parallax" data-speed="-0.07"><div class="shot-card"><img src="screenshots/2_map.png" alt="SpeedLoop live map screen" loading="lazy"></div></div>
+      <div class="shot-parallax" data-speed="0.07"><div class="shot-card"><img src="screenshots/3_trip_history.png" alt="SpeedLoop trip history and drive insights screen" loading="lazy"></div></div>
+      <div class="shot-parallax" data-speed="-0.07"><div class="shot-card"><img src="screenshots/4_trip_details.png" alt="SpeedLoop trip route detail screen" loading="lazy"></div></div>
+      <div class="shot-parallax" data-speed="0.07"><div class="shot-card"><img src="screenshots/5_dashcam.png" alt="SpeedLoop dashcam recording screen" loading="lazy"></div></div>
+      <div class="shot-parallax" data-speed="-0.07"><div class="shot-card"><img src="screenshots/6_hud_mode.png" alt="SpeedLoop mirrored HUD mode screen" loading="lazy"></div></div>
+      <div class="shot-parallax" data-speed="0.07"><div class="shot-card"><img src="screenshots/7_settings.png" alt="SpeedLoop settings screen" loading="lazy"></div></div>
     </div>
   </div>
 </section>
@@ -374,7 +387,7 @@
 <section id="features">
   <div class="parallax-layer pblob pblob-teal" data-speed="-0.45" style="width:480px;height:480px;bottom:-200px;left:-160px;"></div>
   <div class="wrap">
-    <div class="section-head reveal">
+    <div class="feature-banner scroll-scale">
       <p class="eyebrow">WHAT'S INSIDE</p>
       <h2>Eight tools, one dashboard.</h2>
       <p>Everything you'd normally need three separate apps for — built to work together, and to work offline.</p>
@@ -605,6 +618,41 @@
       window.addEventListener('resize', function(){ requestAnimationFrame(function(){ measureParallax(); updateParallax(); }); }, {passive:true});
       measureParallax();
       updateParallax();
+    }
+
+    // Grow-in-on-scroll: scales up from 0.88 to 1 as the element crosses the
+    // lower half of the viewport, like a card zooming into place.
+    var scaleEls = Array.prototype.slice.call(document.querySelectorAll('.scroll-scale')).map(function(el){
+      return { el: el, baseTop: 0, height: 0 };
+    });
+    if (scaleEls.length) {
+      var scaleRafPending = false;
+      var measureScale = function(){
+        scaleEls.forEach(function(item){ item.el.style.transform = ''; item.el.style.opacity = ''; });
+        scaleEls.forEach(function(item){
+          var rect = item.el.getBoundingClientRect();
+          item.baseTop = rect.top + window.scrollY;
+          item.height = rect.height;
+        });
+      };
+      var updateScale = function(){
+        var vh = window.innerHeight;
+        var scrollY = window.scrollY;
+        scaleEls.forEach(function(item){
+          var top = item.baseTop - scrollY;
+          var progress = 1 - Math.max(0, Math.min(1, (top - vh * 0.1) / (vh * 0.6)));
+          var scale = 0.88 + progress * 0.12;
+          item.el.style.opacity = progress.toFixed(3);
+          item.el.style.transform = 'scale(' + scale.toFixed(3) + ')';
+        });
+        scaleRafPending = false;
+      };
+      window.addEventListener('scroll', function(){
+        if (!scaleRafPending) { scaleRafPending = true; requestAnimationFrame(updateScale); }
+      }, {passive:true});
+      window.addEventListener('resize', function(){ requestAnimationFrame(function(){ measureScale(); updateScale(); }); }, {passive:true});
+      measureScale();
+      updateScale();
     }
   }
 
