@@ -55,7 +55,7 @@ Trip data (#3/#4) is realistic seeded data (14.2 km, 38.7 km/h avg, 77 km/h max)
 
 ## .github — fixed a real bug
 
-`release.yml` was a copy-paste leftover from a different app in this developer's account (`com.chowdhuryelab.muslimdeen`, `muslim-deen-*` artifact filenames) — fixed to `com.chowdhuryelab.speedloop` / `speedloop-*`. The workflow's `fastlane supply` Play upload step now has real metadata to upload (see `fastlane/` above, which didn't exist before). The landing page's "Download APK (GitHub)" button now points at a versioned release-tag URL the workflow's release step can find and rewrite on each tag push.
+`release.yml` was a copy-paste leftover from a different app in this developer's account (`com.chowdhuryelab.muslimdeen`, `muslim-deen-*` artifact filenames) — fixed to `com.chowdhuryelab.speedloop` / `speedloop-*`. The workflow's `fastlane supply` Play upload step now has real metadata to upload (see `fastlane/` above, which didn't exist before). The landing page's "Download APK (GitHub)" button points at `/releases/latest`, which GitHub always redirects to the newest published release — no per-release edit needed, so the workflow's old sed-based "rewrite the docs link" step (fragile, and pointed at a placeholder `v0.0.0` tag that 404'd until a real release existed) was removed entirely. A second "All releases" link goes to the repo's full releases list.
 
 ## Policy / compliance fixes made to the app
 

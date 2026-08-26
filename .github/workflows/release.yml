@@ -163,27 +163,9 @@ jobs:
             release/*.apk
             release/*.aab
 
-      # Points the GitHub Pages landing page's "Download APK" links at the tag
-      # just released. Done from a worktree checked out at origin/main - the
-      # job's own HEAD is the tag (detached, possibly diverged from main), so
-      # committing there and pushing HEAD:main would push the tag's whole
-      # history onto main instead of just this file edit.
-      - name: Update GitHub Pages download link
-        if: github.ref_type == 'tag'
-        run: |
-          TAG="${{ steps.tag.outputs.tag }}"
-          git fetch origin main
-          git worktree add /tmp/pages-main origin/main
-          sed -i -E "s#releases/tag/v[0-9]+\.[0-9]+\.[0-9]+#releases/tag/$TAG#g" \
-            /tmp/pages-main/docs/index.html
-          cd /tmp/pages-main
-          if ! git diff --quiet -- docs/index.html; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add docs/index.html
-            git commit -m "docs: point download link at $TAG"
-            git push origin HEAD:main
-          fi
+      # The GitHub Pages landing page's download button points at
+      # /releases/latest, which GitHub itself always redirects to the
+      # newest published release - no docs/index.html edit needed here.
 
       # --- Google Play upload -------------------------------------------------
       # Everything below is skipped when PLAY_SERVICE_ACCOUNT_JSON is absent, so
