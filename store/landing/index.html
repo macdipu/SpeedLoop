@@ -57,17 +57,18 @@
   body::before{
     content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     background:
-      radial-gradient(650px circle at 12% 18%, color-mix(in srgb, var(--teal) 12%, transparent), transparent 60%),
-      radial-gradient(750px circle at 88% 80%, color-mix(in srgb, var(--orange) 9%, transparent), transparent 60%);
+      radial-gradient(800px circle at 10% 15%, color-mix(in srgb, var(--teal) 20%, transparent), transparent 62%),
+      radial-gradient(900px circle at 90% 85%, color-mix(in srgb, var(--orange) 16%, transparent), transparent 62%);
   }
   .wrap{max-width:1080px;margin:0 auto;padding:0 28px;}
 
   /* PARALLAX LAYERS */
   .parallax-layer{position:absolute;z-index:-1;pointer-events:none;will-change:transform;}
-  .pblob{border-radius:50%;filter:blur(70px);opacity:.55;}
-  .pblob-teal{background:color-mix(in srgb, var(--teal) 55%, transparent);}
-  .pblob-orange{background:color-mix(in srgb, var(--orange) 55%, transparent);}
-  @media (max-width:880px){ .pblob{filter:blur(42px);opacity:.4;} }
+  .pblob{border-radius:50%;filter:blur(60px);opacity:.7;}
+  .pblob-teal{background:color-mix(in srgb, var(--teal) 60%, transparent);}
+  .pblob-orange{background:color-mix(in srgb, var(--orange) 60%, transparent);}
+  @media (max-width:880px){ .pblob{filter:blur(38px);opacity:.5;} }
+  .chip-parallax{position:absolute;will-change:transform;pointer-events:none;}
   h1,h2,h3{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.2px;text-wrap:balance;margin:0;}
   .eyebrow{
     font-family:'Roboto Mono',monospace;font-size:13px;letter-spacing:2px;
@@ -145,16 +146,23 @@
   @keyframes float-a{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
   @keyframes float-b{0%,100%{transform:translateY(0);}50%{transform:translateY(8px);}}
   .float-chip{
-    position:absolute;background:var(--surface);border:1px solid var(--border);
+    background:var(--surface);border:1px solid var(--border);
     border-radius:12px;padding:10px 14px;font-family:'Roboto Mono',monospace;font-size:12px;
     box-shadow:0 12px 30px -14px rgba(0,0,0,.3);color:var(--text-2);
   }
-  .chip-a{top:8%;left:-6%;animation:float-a 4.5s ease-in-out infinite;}
-  .chip-b{bottom:14%;right:-8%;color:var(--teal);animation:float-b 5.2s ease-in-out infinite;}
+  .chip-parallax.pos-a{top:8%;left:-6%;}
+  .chip-parallax.pos-b{bottom:14%;right:-8%;}
+  .chip-a{animation:float-a 4.5s ease-in-out infinite;}
+  .chip-b{color:var(--teal);animation:float-b 5.2s ease-in-out infinite;}
+  .hero-vignette{
+    position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;
+    background:radial-gradient(120% 90% at 50% 15%, transparent 35%, color-mix(in srgb, var(--bg) 75%, transparent) 100%);
+  }
   @media (prefers-reduced-motion: reduce){
     .dot, .chip-a, .chip-b{animation:none;}
     .hero-visual-inner, .btn, .nav-cta, .brand svg, .feature-card, .feature-card .ic, .reveal{transition:none;}
-    .parallax-layer{transform:none !important;}
+    .parallax-layer, .chip-parallax{transform:none !important;}
+    .hero-vignette{opacity:0 !important;}
     html{scroll-behavior:auto;}
   }
 
@@ -167,8 +175,8 @@
 
   /* reveal-on-scroll */
   .reveal{
-    opacity:0;transform:translateY(30px) scale(.97);filter:blur(5px);
-    transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1), filter .7s ease;
+    opacity:0;transform:translateY(38px) scale(.95);filter:blur(7px);
+    transition:opacity .75s cubic-bezier(.2,.7,.2,1), transform .75s cubic-bezier(.2,.7,.2,1), filter .75s ease;
   }
   .reveal.in{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
 
@@ -296,8 +304,9 @@
 </nav>
 
 <header class="hero" id="heroSection">
-  <div class="parallax-layer pblob pblob-teal" data-speed="0.18" style="width:440px;height:440px;top:-160px;left:-140px;"></div>
-  <div class="parallax-layer pblob pblob-orange" data-speed="-0.24" style="width:360px;height:360px;top:60px;right:-160px;"></div>
+  <div class="parallax-layer pblob pblob-teal" data-speed="0.4" style="width:520px;height:520px;top:-180px;left:-160px;"></div>
+  <div class="parallax-layer pblob pblob-orange" data-speed="-0.55" style="width:420px;height:420px;top:80px;right:-180px;"></div>
+  <div class="hero-vignette"></div>
   <div class="wrap hero-grid">
     <div>
       <p class="eyebrow">GPS SPEEDOMETER · TRIP LOG · DASHCAM</p>
@@ -320,7 +329,7 @@
     </div>
     <div class="hero-visual">
       <div class="hero-visual-inner" id="heroVisualInner">
-        <div class="float-chip chip-a">⬤ Trip recording…</div>
+        <div class="chip-parallax pos-a" data-speed="0.6"><div class="float-chip chip-a">⬤ Trip recording…</div></div>
         <div class="device">
           <div class="screen">
             <div class="badge-rec"><span class="dot"></span> REC 00:41</div>
@@ -328,14 +337,14 @@
             <div class="speed-unit">KM/H · N-EAST</div>
           </div>
         </div>
-        <div class="float-chip chip-b">▲ 84 km/h top speed</div>
+        <div class="chip-parallax pos-b" data-speed="-0.5"><div class="float-chip chip-b">▲ 84 km/h top speed</div></div>
       </div>
     </div>
   </div>
 </header>
 
 <section class="shots-section" id="screenshots">
-  <div class="parallax-layer pblob pblob-orange" data-speed="0.2" style="width:380px;height:380px;top:-40px;right:-140px;"></div>
+  <div class="parallax-layer pblob pblob-orange" data-speed="0.45" style="width:440px;height:440px;top:-60px;right:-160px;"></div>
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">SEE IT IN ACTION</p>
@@ -355,7 +364,7 @@
 </section>
 
 <section id="features">
-  <div class="parallax-layer pblob pblob-teal" data-speed="-0.2" style="width:420px;height:420px;bottom:-180px;left:-140px;"></div>
+  <div class="parallax-layer pblob pblob-teal" data-speed="-0.45" style="width:480px;height:480px;bottom:-200px;left:-160px;"></div>
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">WHAT'S INSIDE</p>
@@ -408,7 +417,7 @@
 </section>
 
 <section class="privacy-strip" id="privacy">
-  <div class="parallax-layer pblob pblob-teal" data-speed="0.16" style="width:340px;height:340px;top:-120px;right:-100px;"></div>
+  <div class="parallax-layer pblob pblob-teal" data-speed="0.4" style="width:400px;height:400px;top:-140px;right:-120px;"></div>
   <div class="wrap privacy-grid">
     <div class="reveal">
       <p class="eyebrow">PRIVATE BY DESIGN</p>
@@ -433,7 +442,7 @@
 </section>
 
 <section id="how">
-  <div class="parallax-layer pblob pblob-orange" data-speed="-0.18" style="width:360px;height:360px;bottom:-150px;right:-120px;"></div>
+  <div class="parallax-layer pblob pblob-orange" data-speed="-0.4" style="width:420px;height:420px;bottom:-170px;right:-140px;"></div>
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">GETTING STARTED</p>
@@ -528,12 +537,17 @@
 
     var heroSection = document.getElementById('heroSection');
     var heroInner = document.getElementById('heroVisualInner');
+    var heroVignette = document.querySelector('.hero-vignette');
     if (heroSection && heroInner) {
       var tiltX = 0, tiltY = 0;
       var applyHeroTransform = function(){
-        var scrollShift = Math.max(-40, Math.min(40, window.scrollY * -0.12));
+        var heroH = heroSection.offsetHeight || window.innerHeight;
+        var progress = Math.max(0, Math.min(1, window.scrollY / (heroH * 0.85)));
+        var scrollShift = Math.max(-130, Math.min(130, window.scrollY * -0.32));
+        var scale = 1 - progress * 0.1;
         heroInner.style.transform =
-          'translate3d(0,' + scrollShift.toFixed(1) + 'px,0) rotateY(' + tiltY.toFixed(2) + 'deg) rotateX(' + tiltX.toFixed(2) + 'deg)';
+          'translate3d(0,' + scrollShift.toFixed(1) + 'px,0) scale(' + scale.toFixed(3) + ') rotateY(' + tiltY.toFixed(2) + 'deg) rotateX(' + tiltX.toFixed(2) + 'deg)';
+        if (heroVignette) heroVignette.style.opacity = (progress * 0.85).toFixed(2);
       };
       heroSection.addEventListener('mousemove', function(e){
         var r = heroSection.getBoundingClientRect();
@@ -550,23 +564,34 @@
       applyHeroTransform();
     }
 
-    var parallaxEls = Array.prototype.slice.call(document.querySelectorAll('.parallax-layer[data-speed]'));
+    var parallaxEls = Array.prototype.slice.call(document.querySelectorAll('[data-speed]')).map(function(el){
+      return { el: el, speed: parseFloat(el.dataset.speed || '0'), baseTop: 0, height: 0 };
+    });
     if (parallaxEls.length) {
       var rafPending = false;
+      var measureParallax = function(){
+        parallaxEls.forEach(function(item){ item.el.style.transform = ''; });
+        parallaxEls.forEach(function(item){
+          var rect = item.el.getBoundingClientRect();
+          item.baseTop = rect.top + window.scrollY;
+          item.height = rect.height;
+        });
+      };
       var updateParallax = function(){
         var vh = window.innerHeight;
-        parallaxEls.forEach(function(el){
-          var speed = parseFloat(el.dataset.speed || '0');
-          var rect = el.getBoundingClientRect();
-          var delta = (rect.top + rect.height / 2 - vh / 2) * speed;
-          el.style.transform = 'translate3d(0,' + delta.toFixed(1) + 'px,0)';
+        var scrollY = window.scrollY;
+        parallaxEls.forEach(function(item){
+          var viewportCenter = (item.baseTop - scrollY) + item.height / 2;
+          var delta = (viewportCenter - vh / 2) * item.speed;
+          item.el.style.transform = 'translate3d(0,' + delta.toFixed(1) + 'px,0)';
         });
         rafPending = false;
       };
       window.addEventListener('scroll', function(){
         if (!rafPending) { rafPending = true; requestAnimationFrame(updateParallax); }
       }, {passive:true});
-      window.addEventListener('resize', function(){ requestAnimationFrame(updateParallax); }, {passive:true});
+      window.addEventListener('resize', function(){ requestAnimationFrame(function(){ measureParallax(); updateParallax(); }); }, {passive:true});
+      measureParallax();
       updateParallax();
     }
   }

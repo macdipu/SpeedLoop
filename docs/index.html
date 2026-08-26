@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Roboto+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='1' y1='1' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%2300A882'/%3E%3Cstop offset='100%25' stop-color='%234DFFCE'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='46' fill='%230A0E1A'/%3E%3Ccircle cx='50' cy='50' r='32' fill='none' stroke='url(%23g)' stroke-width='10' stroke-dasharray='151 202' stroke-dashoffset='-38' stroke-linecap='round' transform='rotate(-215 50 50)'/%3E%3Cpolygon points='50,29 55,54 50,58 45,54' fill='%23FF8A4C' transform='rotate(52 50 50)'/%3E%3Ccircle cx='50' cy='50' r='6' fill='%234DFFCE'/%3E%3C/svg%3E">
 <style>
   :root{
     --bg:#F2F4F8;
@@ -52,13 +53,28 @@
   }
 
   *{box-sizing:border-box;}
-  html{color-scheme:light dark;}
+  html{color-scheme:light dark;scroll-behavior:smooth;}
   body{
     margin:0;background:var(--bg);color:var(--text);
     font-family:'Manrope',ui-sans-serif,system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;
+    position:relative;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(800px circle at 10% 15%, color-mix(in srgb, var(--teal) 20%, transparent), transparent 62%),
+      radial-gradient(900px circle at 90% 85%, color-mix(in srgb, var(--orange) 16%, transparent), transparent 62%);
   }
   .wrap{max-width:1080px;margin:0 auto;padding:0 28px;}
+
+  /* PARALLAX LAYERS */
+  .parallax-layer{position:absolute;z-index:-1;pointer-events:none;will-change:transform;}
+  .pblob{border-radius:50%;filter:blur(60px);opacity:.7;}
+  .pblob-teal{background:color-mix(in srgb, var(--teal) 60%, transparent);}
+  .pblob-orange{background:color-mix(in srgb, var(--orange) 60%, transparent);}
+  @media (max-width:880px){ .pblob{filter:blur(38px);opacity:.5;} }
+  .chip-parallax{position:absolute;will-change:transform;pointer-events:none;}
   h1,h2,h3{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.2px;text-wrap:balance;margin:0;}
   .eyebrow{
     font-family:'Roboto Mono',monospace;font-size:13px;letter-spacing:2px;
@@ -136,29 +152,42 @@
   @keyframes float-a{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
   @keyframes float-b{0%,100%{transform:translateY(0);}50%{transform:translateY(8px);}}
   .float-chip{
-    position:absolute;background:var(--surface);border:1px solid var(--border);
+    background:var(--surface);border:1px solid var(--border);
     border-radius:12px;padding:10px 14px;font-family:'Roboto Mono',monospace;font-size:12px;
     box-shadow:0 12px 30px -14px rgba(0,0,0,.3);color:var(--text-2);
   }
-  .chip-a{top:8%;left:-6%;animation:float-a 4.5s ease-in-out infinite;}
-  .chip-b{bottom:14%;right:-8%;color:var(--teal);animation:float-b 5.2s ease-in-out infinite;}
+  .chip-parallax.pos-a{top:8%;left:-6%;}
+  .chip-parallax.pos-b{bottom:14%;right:-8%;}
+  .chip-a{animation:float-a 4.5s ease-in-out infinite;}
+  .chip-b{color:var(--teal);animation:float-b 5.2s ease-in-out infinite;}
+  .hero-vignette{
+    position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;
+    background:radial-gradient(120% 90% at 50% 15%, transparent 35%, color-mix(in srgb, var(--bg) 75%, transparent) 100%);
+  }
   @media (prefers-reduced-motion: reduce){
     .dot, .chip-a, .chip-b{animation:none;}
     .hero-visual-inner, .btn, .nav-cta, .brand svg, .feature-card, .feature-card .ic, .reveal{transition:none;}
+    .parallax-layer, .chip-parallax{transform:none !important;}
+    .hero-vignette{opacity:0 !important;}
+    html{scroll-behavior:auto;}
   }
 
   /* SECTION shared */
   section{padding:88px 0;}
+  #features, #how{position:relative;overflow:hidden;}
   .section-head{max-width:640px;margin:0 0 52px;}
   .section-head h2{font-size:clamp(28px,3.4vw,40px);}
   .section-head p{color:var(--text-2);font-size:17px;line-height:1.6;margin-top:14px;}
 
   /* reveal-on-scroll */
-  .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1);}
-  .reveal.in{opacity:1;transform:translateY(0);}
+  .reveal{
+    opacity:0;transform:translateY(38px) scale(.95);filter:blur(7px);
+    transition:opacity .75s cubic-bezier(.2,.7,.2,1), transform .75s cubic-bezier(.2,.7,.2,1), filter .75s ease;
+  }
+  .reveal.in{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
 
   /* SCREENSHOTS */
-  .shots-section{padding:20px 0 88px;}
+  .shots-section{padding:20px 0 88px;position:relative;overflow:hidden;}
   .shot-scroll{
     display:flex; gap:20px; overflow-x:auto; padding:8px 4px 20px;
     scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;
@@ -198,6 +227,7 @@
   /* PRIVACY STRIP */
   .privacy-strip{
     background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+    position:relative;overflow:hidden;
   }
   .privacy-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
   .privacy-list{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-direction:column;gap:14px;}
@@ -282,6 +312,9 @@
 </nav>
 
 <header class="hero" id="heroSection">
+  <div class="parallax-layer pblob pblob-teal" data-speed="0.4" style="width:520px;height:520px;top:-180px;left:-160px;"></div>
+  <div class="parallax-layer pblob pblob-orange" data-speed="-0.55" style="width:420px;height:420px;top:80px;right:-180px;"></div>
+  <div class="hero-vignette"></div>
   <div class="wrap hero-grid">
     <div>
       <p class="eyebrow">GPS SPEEDOMETER · TRIP LOG · DASHCAM</p>
@@ -304,7 +337,7 @@
     </div>
     <div class="hero-visual">
       <div class="hero-visual-inner" id="heroVisualInner">
-        <div class="float-chip chip-a">⬤ Trip recording…</div>
+        <div class="chip-parallax pos-a" data-speed="0.6"><div class="float-chip chip-a">⬤ Trip recording…</div></div>
         <div class="device">
           <div class="screen">
             <div class="badge-rec"><span class="dot"></span> REC 00:41</div>
@@ -312,13 +345,14 @@
             <div class="speed-unit">KM/H · N-EAST</div>
           </div>
         </div>
-        <div class="float-chip chip-b">▲ 84 km/h top speed</div>
+        <div class="chip-parallax pos-b" data-speed="-0.5"><div class="float-chip chip-b">▲ 84 km/h top speed</div></div>
       </div>
     </div>
   </div>
 </header>
 
 <section class="shots-section" id="screenshots">
+  <div class="parallax-layer pblob pblob-orange" data-speed="0.45" style="width:440px;height:440px;top:-60px;right:-160px;"></div>
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">SEE IT IN ACTION</p>
@@ -338,6 +372,7 @@
 </section>
 
 <section id="features">
+  <div class="parallax-layer pblob pblob-teal" data-speed="-0.45" style="width:480px;height:480px;bottom:-200px;left:-160px;"></div>
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">WHAT'S INSIDE</p>
@@ -390,6 +425,7 @@
 </section>
 
 <section class="privacy-strip" id="privacy">
+  <div class="parallax-layer pblob pblob-teal" data-speed="0.4" style="width:400px;height:400px;top:-140px;right:-120px;"></div>
   <div class="wrap privacy-grid">
     <div class="reveal">
       <p class="eyebrow">PRIVATE BY DESIGN</p>
@@ -414,6 +450,7 @@
 </section>
 
 <section id="how">
+  <div class="parallax-layer pblob pblob-orange" data-speed="-0.4" style="width:420px;height:420px;bottom:-170px;right:-140px;"></div>
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">GETTING STARTED</p>
@@ -512,17 +549,62 @@
     // Hero visual parallax tilt, tracked across the whole hero section
     var heroSection = document.getElementById('heroSection');
     var heroInner = document.getElementById('heroVisualInner');
+    var heroVignette = document.querySelector('.hero-vignette');
     if (heroSection && heroInner) {
+      var tiltX = 0, tiltY = 0;
+      var applyHeroTransform = function(){
+        var heroH = heroSection.offsetHeight || window.innerHeight;
+        var progress = Math.max(0, Math.min(1, window.scrollY / (heroH * 0.85)));
+        var scrollShift = Math.max(-130, Math.min(130, window.scrollY * -0.32));
+        var scale = 1 - progress * 0.1;
+        heroInner.style.transform =
+          'translate3d(0,' + scrollShift.toFixed(1) + 'px,0) scale(' + scale.toFixed(3) + ') rotateY(' + tiltY.toFixed(2) + 'deg) rotateX(' + tiltX.toFixed(2) + 'deg)';
+        if (heroVignette) heroVignette.style.opacity = (progress * 0.85).toFixed(2);
+      };
       heroSection.addEventListener('mousemove', function(e){
         var r = heroSection.getBoundingClientRect();
         var px = (e.clientX - r.left) / r.width - 0.5;
         var py = (e.clientY - r.top) / r.height - 0.5;
-        heroInner.style.transform =
-          'rotateY(' + (px * 10).toFixed(2) + 'deg) rotateX(' + (py * -10).toFixed(2) + 'deg) translateZ(0)';
+        tiltY = px * 10; tiltX = py * -10;
+        applyHeroTransform();
       });
       heroSection.addEventListener('mouseleave', function(){
-        heroInner.style.transform = 'rotateY(0) rotateX(0)';
+        tiltX = 0; tiltY = 0;
+        applyHeroTransform();
       });
+      window.addEventListener('scroll', function(){ requestAnimationFrame(applyHeroTransform); }, {passive:true});
+      applyHeroTransform();
+    }
+
+    var parallaxEls = Array.prototype.slice.call(document.querySelectorAll('[data-speed]')).map(function(el){
+      return { el: el, speed: parseFloat(el.dataset.speed || '0'), baseTop: 0, height: 0 };
+    });
+    if (parallaxEls.length) {
+      var rafPending = false;
+      var measureParallax = function(){
+        parallaxEls.forEach(function(item){ item.el.style.transform = ''; });
+        parallaxEls.forEach(function(item){
+          var rect = item.el.getBoundingClientRect();
+          item.baseTop = rect.top + window.scrollY;
+          item.height = rect.height;
+        });
+      };
+      var updateParallax = function(){
+        var vh = window.innerHeight;
+        var scrollY = window.scrollY;
+        parallaxEls.forEach(function(item){
+          var viewportCenter = (item.baseTop - scrollY) + item.height / 2;
+          var delta = (viewportCenter - vh / 2) * item.speed;
+          item.el.style.transform = 'translate3d(0,' + delta.toFixed(1) + 'px,0)';
+        });
+        rafPending = false;
+      };
+      window.addEventListener('scroll', function(){
+        if (!rafPending) { rafPending = true; requestAnimationFrame(updateParallax); }
+      }, {passive:true});
+      window.addEventListener('resize', function(){ requestAnimationFrame(function(){ measureParallax(); updateParallax(); }); }, {passive:true});
+      measureParallax();
+      updateParallax();
     }
   }
 
