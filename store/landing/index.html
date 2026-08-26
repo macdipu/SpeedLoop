@@ -2,6 +2,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Roboto+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='1' y1='1' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%2300A882'/%3E%3Cstop offset='100%25' stop-color='%234DFFCE'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='46' fill='%230A0E1A'/%3E%3Ccircle cx='50' cy='50' r='32' fill='none' stroke='url(%23g)' stroke-width='10' stroke-dasharray='151 202' stroke-dashoffset='-38' stroke-linecap='round' transform='rotate(-215 50 50)'/%3E%3Cpolygon points='50,29 55,54 50,58 45,54' fill='%23FF8A4C' transform='rotate(52 50 50)'/%3E%3Ccircle cx='50' cy='50' r='6' fill='%234DFFCE'/%3E%3C/svg%3E">
 <style>
   :root{
     --bg:#F2F4F8;
@@ -45,13 +46,28 @@
     --code-bg:#0A0E1A;
   }
 
+  html{scroll-behavior:smooth;}
   *{box-sizing:border-box;}
   body{
     margin:0;background:var(--bg);color:var(--text);
     font-family:'Manrope',ui-sans-serif,system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;
+    position:relative;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(650px circle at 12% 18%, color-mix(in srgb, var(--teal) 12%, transparent), transparent 60%),
+      radial-gradient(750px circle at 88% 80%, color-mix(in srgb, var(--orange) 9%, transparent), transparent 60%);
   }
   .wrap{max-width:1080px;margin:0 auto;padding:0 28px;}
+
+  /* PARALLAX LAYERS */
+  .parallax-layer{position:absolute;z-index:-1;pointer-events:none;will-change:transform;}
+  .pblob{border-radius:50%;filter:blur(70px);opacity:.55;}
+  .pblob-teal{background:color-mix(in srgb, var(--teal) 55%, transparent);}
+  .pblob-orange{background:color-mix(in srgb, var(--orange) 55%, transparent);}
+  @media (max-width:880px){ .pblob{filter:blur(42px);opacity:.4;} }
   h1,h2,h3{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.2px;text-wrap:balance;margin:0;}
   .eyebrow{
     font-family:'Roboto Mono',monospace;font-size:13px;letter-spacing:2px;
@@ -138,20 +154,26 @@
   @media (prefers-reduced-motion: reduce){
     .dot, .chip-a, .chip-b{animation:none;}
     .hero-visual-inner, .btn, .nav-cta, .brand svg, .feature-card, .feature-card .ic, .reveal{transition:none;}
+    .parallax-layer{transform:none !important;}
+    html{scroll-behavior:auto;}
   }
 
   /* SECTION shared */
   section{padding:88px 0;}
+  #features, #how{position:relative;overflow:hidden;}
   .section-head{max-width:640px;margin:0 0 52px;}
   .section-head h2{font-size:clamp(28px,3.4vw,40px);}
   .section-head p{color:var(--text-2);font-size:17px;line-height:1.6;margin-top:14px;}
 
   /* reveal-on-scroll */
-  .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1);}
-  .reveal.in{opacity:1;transform:translateY(0);}
+  .reveal{
+    opacity:0;transform:translateY(30px) scale(.97);filter:blur(5px);
+    transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1), filter .7s ease;
+  }
+  .reveal.in{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
 
   /* SCREENSHOTS */
-  .shots-section{padding:20px 0 88px;}
+  .shots-section{padding:20px 0 88px;position:relative;overflow:hidden;}
   .shot-scroll{
     display:flex; gap:20px; overflow-x:auto; padding:8px 4px 20px;
     scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;
@@ -191,6 +213,7 @@
   /* PRIVACY STRIP */
   .privacy-strip{
     background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+    position:relative;overflow:hidden;
   }
   .privacy-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
   .privacy-list{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-direction:column;gap:14px;}
@@ -273,6 +296,8 @@
 </nav>
 
 <header class="hero" id="heroSection">
+  <div class="parallax-layer pblob pblob-teal" data-speed="0.18" style="width:440px;height:440px;top:-160px;left:-140px;"></div>
+  <div class="parallax-layer pblob pblob-orange" data-speed="-0.24" style="width:360px;height:360px;top:60px;right:-160px;"></div>
   <div class="wrap hero-grid">
     <div>
       <p class="eyebrow">GPS SPEEDOMETER · TRIP LOG · DASHCAM</p>
@@ -310,6 +335,7 @@
 </header>
 
 <section class="shots-section" id="screenshots">
+  <div class="parallax-layer pblob pblob-orange" data-speed="0.2" style="width:380px;height:380px;top:-40px;right:-140px;"></div>
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">SEE IT IN ACTION</p>
@@ -329,6 +355,7 @@
 </section>
 
 <section id="features">
+  <div class="parallax-layer pblob pblob-teal" data-speed="-0.2" style="width:420px;height:420px;bottom:-180px;left:-140px;"></div>
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">WHAT'S INSIDE</p>
@@ -381,6 +408,7 @@
 </section>
 
 <section class="privacy-strip" id="privacy">
+  <div class="parallax-layer pblob pblob-teal" data-speed="0.16" style="width:340px;height:340px;top:-120px;right:-100px;"></div>
   <div class="wrap privacy-grid">
     <div class="reveal">
       <p class="eyebrow">PRIVATE BY DESIGN</p>
@@ -405,6 +433,7 @@
 </section>
 
 <section id="how">
+  <div class="parallax-layer pblob pblob-orange" data-speed="-0.18" style="width:360px;height:360px;bottom:-150px;right:-120px;"></div>
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">GETTING STARTED</p>
@@ -500,16 +529,45 @@
     var heroSection = document.getElementById('heroSection');
     var heroInner = document.getElementById('heroVisualInner');
     if (heroSection && heroInner) {
+      var tiltX = 0, tiltY = 0;
+      var applyHeroTransform = function(){
+        var scrollShift = Math.max(-40, Math.min(40, window.scrollY * -0.12));
+        heroInner.style.transform =
+          'translate3d(0,' + scrollShift.toFixed(1) + 'px,0) rotateY(' + tiltY.toFixed(2) + 'deg) rotateX(' + tiltX.toFixed(2) + 'deg)';
+      };
       heroSection.addEventListener('mousemove', function(e){
         var r = heroSection.getBoundingClientRect();
         var px = (e.clientX - r.left) / r.width - 0.5;
         var py = (e.clientY - r.top) / r.height - 0.5;
-        heroInner.style.transform =
-          'rotateY(' + (px * 10).toFixed(2) + 'deg) rotateX(' + (py * -10).toFixed(2) + 'deg) translateZ(0)';
+        tiltY = px * 10; tiltX = py * -10;
+        applyHeroTransform();
       });
       heroSection.addEventListener('mouseleave', function(){
-        heroInner.style.transform = 'rotateY(0) rotateX(0)';
+        tiltX = 0; tiltY = 0;
+        applyHeroTransform();
       });
+      window.addEventListener('scroll', function(){ requestAnimationFrame(applyHeroTransform); }, {passive:true});
+      applyHeroTransform();
+    }
+
+    var parallaxEls = Array.prototype.slice.call(document.querySelectorAll('.parallax-layer[data-speed]'));
+    if (parallaxEls.length) {
+      var rafPending = false;
+      var updateParallax = function(){
+        var vh = window.innerHeight;
+        parallaxEls.forEach(function(el){
+          var speed = parseFloat(el.dataset.speed || '0');
+          var rect = el.getBoundingClientRect();
+          var delta = (rect.top + rect.height / 2 - vh / 2) * speed;
+          el.style.transform = 'translate3d(0,' + delta.toFixed(1) + 'px,0)';
+        });
+        rafPending = false;
+      };
+      window.addEventListener('scroll', function(){
+        if (!rafPending) { rafPending = true; requestAnimationFrame(updateParallax); }
+      }, {passive:true});
+      window.addEventListener('resize', function(){ requestAnimationFrame(updateParallax); }, {passive:true});
+      updateParallax();
     }
   }
 
