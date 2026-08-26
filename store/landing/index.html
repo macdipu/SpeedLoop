@@ -64,18 +64,28 @@
     position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);
     background:color-mix(in srgb, var(--bg) 82%, transparent);
     border-bottom:1px solid var(--border);
+    transition:box-shadow .25s ease;
   }
+  nav.scrolled{box-shadow:0 8px 24px -18px rgba(0,0,0,.4);}
   .nav-row{display:flex;align-items:center;justify-content:space-between;height:68px;}
-  .brand{display:flex;align-items:center;gap:10px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:21px;}
-  .brand svg{width:30px;height:30px;flex:none;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:21px;text-decoration:none;color:var(--text);}
+  .brand svg{width:30px;height:30px;flex:none;transition:transform .4s cubic-bezier(.2,.8,.2,1);}
+  .brand:hover svg{transform:rotate(28deg);}
   .brand b{color:var(--teal);font-weight:700;}
   .nav-links{display:flex;gap:30px;font-size:15px;color:var(--text-2);}
-  .nav-links a{text-decoration:none;transition:color .15s;}
+  .nav-links a{text-decoration:none;transition:color .15s;position:relative;}
+  .nav-links a::after{
+    content:"";position:absolute;left:0;right:100%;bottom:-4px;height:1.5px;background:var(--teal);
+    transition:right .25s cubic-bezier(.2,.8,.2,1);
+  }
   .nav-links a:hover{color:var(--teal);}
+  .nav-links a:hover::after{right:0;}
   .nav-cta{
     font-family:'Roboto Mono',monospace;font-size:13px;font-weight:500;letter-spacing:.5px;
     background:var(--teal);color:#04140F;padding:10px 18px;border-radius:8px;text-decoration:none;
+    display:inline-block;transition:transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s ease;
   }
+  .nav-cta:hover{box-shadow:0 10px 24px -10px color-mix(in srgb, var(--teal) 60%, transparent);}
 
   /* HERO */
   .hero{padding:90px 0 70px;position:relative;overflow:hidden;}
@@ -87,16 +97,19 @@
   .btn{
     font-family:'Roboto Mono',monospace;font-size:14px;font-weight:500;letter-spacing:.4px;
     padding:14px 24px;border-radius:10px;text-decoration:none;display:inline-flex;align-items:center;gap:10px;
-    border:1px solid transparent;
+    border:1px solid transparent;transition:transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease, border-color .2s ease, background .2s ease;
   }
   .btn-primary{background:var(--teal);color:#04140F;}
+  .btn-primary:hover{box-shadow:0 14px 30px -12px color-mix(in srgb, var(--teal) 65%, transparent);}
   .btn-ghost{border-color:var(--border);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--teal);color:var(--teal);}
   .trust-row{display:flex;gap:26px;margin-top:36px;flex-wrap:wrap;}
   .trust-item{font-size:13px;color:var(--text-3);display:flex;align-items:center;gap:8px;font-family:'Roboto Mono',monospace;}
   .trust-item svg{width:15px;height:15px;color:var(--teal);flex:none;}
 
   /* Phone/gauge visual */
-  .hero-visual{position:relative;display:flex;justify-content:center;}
+  .hero-visual{position:relative;display:flex;justify-content:center;perspective:900px;}
+  .hero-visual-inner{position:relative;transition:transform .25s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;}
   .device{
     width:280px;aspect-ratio:9/18.5;border-radius:38px;
     background:var(--code-bg);border:8px solid #000;
@@ -105,7 +118,7 @@
   }
   :root[data-theme="light"] .device, :root:not([data-theme="dark"]) .device{box-shadow:0 30px 70px -24px rgba(20,30,60,.35);}
   .device .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-  .speed-num{font-family:'Roboto Mono',monospace;font-size:56px;font-weight:500;color:#EDEFF6;line-height:1;margin-top:14px;}
+  .speed-num{font-family:'Roboto Mono',monospace;font-size:56px;font-weight:500;color:#EDEFF6;line-height:1;margin-top:14px;font-variant-numeric:tabular-nums;}
   .speed-unit{font-family:'Roboto Mono',monospace;font-size:13px;color:#8892B0;letter-spacing:2px;margin-top:4px;}
   .badge-rec{
     position:absolute;top:22px;left:22px;display:flex;align-items:center;gap:6px;
@@ -113,14 +126,19 @@
   }
   .dot{width:7px;height:7px;border-radius:50%;background:#FF8A4C;animation:pulse 1.6s ease-in-out infinite;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
-  @media (prefers-reduced-motion: reduce){.dot{animation:none;}}
+  @keyframes float-a{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+  @keyframes float-b{0%,100%{transform:translateY(0);}50%{transform:translateY(8px);}}
   .float-chip{
     position:absolute;background:var(--surface);border:1px solid var(--border);
     border-radius:12px;padding:10px 14px;font-family:'Roboto Mono',monospace;font-size:12px;
     box-shadow:0 12px 30px -14px rgba(0,0,0,.3);color:var(--text-2);
   }
-  .chip-a{top:8%;left:-6%;}
-  .chip-b{bottom:14%;right:-8%;color:var(--teal);}
+  .chip-a{top:8%;left:-6%;animation:float-a 4.5s ease-in-out infinite;}
+  .chip-b{bottom:14%;right:-8%;color:var(--teal);animation:float-b 5.2s ease-in-out infinite;}
+  @media (prefers-reduced-motion: reduce){
+    .dot, .chip-a, .chip-b{animation:none;}
+    .hero-visual-inner, .btn, .nav-cta, .brand svg, .feature-card, .feature-card .ic, .reveal{transition:none;}
+  }
 
   /* SECTION shared */
   section{padding:88px 0;}
@@ -128,16 +146,28 @@
   .section-head h2{font-size:clamp(28px,3.4vw,40px);}
   .section-head p{color:var(--text-2);font-size:17px;line-height:1.6;margin-top:14px;}
 
+  /* reveal-on-scroll */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1);}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
   /* FEATURES */
   .feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
   .feature-card{
     background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px 22px;
+    transition:transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s ease, border-color .3s ease;
+  }
+  .feature-card:hover{
+    transform:translateY(-6px);
+    border-color:color-mix(in srgb, var(--teal) 45%, var(--border));
+    box-shadow:0 22px 40px -24px rgba(0,0,0,.35);
   }
   .feature-card .ic{
     width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;
     background:color-mix(in srgb, var(--teal) 14%, transparent);color:var(--teal);margin-bottom:18px;
+    transition:transform .3s cubic-bezier(.2,.8,.2,1);
   }
-  .feature-card:nth-child(3) .ic{background:color-mix(in srgb, var(--orange) 14%, transparent);color:var(--orange);}
+  .feature-card:hover .ic{transform:scale(1.1);}
+  .feature-card .ic.ic-accent{background:color-mix(in srgb, var(--orange) 14%, transparent);color:var(--orange);}
   .feature-card h3{font-size:19px;margin-bottom:8px;}
   .feature-card p{font-size:14.5px;color:var(--text-2);line-height:1.55;margin:0;}
 
@@ -155,7 +185,8 @@
     text-align:left;font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;
     color:var(--text-3);padding:0 0 10px;border-bottom:1px solid var(--border);font-weight:500;
   }
-  .perm-table td{padding:13px 0;border-bottom:1px solid var(--border);color:var(--text-2);vertical-align:top;}
+  .perm-table td{padding:13px 0;border-bottom:1px solid var(--border);color:var(--text-2);vertical-align:top;transition:color .2s ease;}
+  .perm-table tr:hover td{color:var(--text);}
   .perm-table td:first-child{color:var(--text);font-weight:600;white-space:nowrap;padding-right:16px;}
 
   /* HOW IT WORKS */
@@ -165,7 +196,9 @@
     font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;color:var(--teal);
     border:1px solid var(--border);width:34px;height:34px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;margin-bottom:16px;
+    transition:background .25s ease, color .25s ease, transform .25s ease;
   }
+  .step:hover .num{background:var(--teal);color:#04140F;transform:scale(1.08);}
   .step h3{font-size:18px;margin-bottom:8px;}
   .step p{font-size:14.5px;color:var(--text-2);line-height:1.55;margin:0;}
 
@@ -199,9 +232,9 @@
   }
 </style>
 
-<nav>
+<nav id="nav">
   <div class="wrap nav-row">
-    <div class="brand">
+    <a class="brand" href="https://claude.ai/code/artifact/5bb481a1-f0a0-403b-b2cd-5d63db4b35f6">
       <svg viewBox="0 0 100 100"><defs><linearGradient id="navg" x1="0" y1="1" x2="1" y2="0">
         <stop offset="0%" stop-color="#00A882"/><stop offset="100%" stop-color="#4DFFCE"/></linearGradient></defs>
         <circle cx="50" cy="50" r="32" fill="none" stroke="url(#navg)" stroke-width="9"
@@ -210,27 +243,28 @@
         <circle cx="50" cy="50" r="6" fill="#4DFFCE"/>
       </svg>
       Speed<b>Loop</b>
-    </div>
+    </a>
     <div class="nav-links">
       <a href="#features">Features</a>
       <a href="#privacy">Privacy</a>
       <a href="#how">How it works</a>
       <a href="https://claude.ai/code/artifact/49d7bd5f-0802-488d-96e5-ec8dc59434dd">Privacy Policy</a>
     </div>
-    <a class="nav-cta" href="#get">GET THE APP</a>
+    <a class="nav-cta" data-magnetic data-strength="0.35" href="#get">GET THE APP</a>
   </div>
 </nav>
 
-<header class="hero">
+<header class="hero" id="heroSection">
   <div class="wrap hero-grid">
     <div>
       <p class="eyebrow">GPS SPEEDOMETER · TRIP LOG · DASHCAM</p>
       <h1>Your speed, your<br>trips, your <span class="accent">footage</span>.<br>Never leaves your phone.</h1>
       <p class="lede">SpeedLoop tracks speed, logs every trip, and records loop dashcam video with a live overlay — offline-first, with no account, no ads, and nothing uploaded to us.</p>
       <div class="btn-row" id="get">
-        <a class="btn btn-primary" href="#">▶ Get it on Google Play</a>
-        <a class="btn btn-ghost" href="#privacy">See what data it uses</a>
+        <a class="btn btn-primary" data-magnetic data-strength="0.3" href="#">▶ Get it on Google Play</a>
+        <a class="btn btn-ghost" data-magnetic data-strength="0.3" href="https://github.com/macdipu/SpeedLoop/releases/tag/v0.0.0">⇩ Download APK (GitHub)</a>
       </div>
+      <p style="margin:14px 0 0;"><a href="#privacy" style="font-size:13px;color:var(--text-3);text-decoration:underline;">See what data it uses</a></p>
       <div class="trust-row">
         <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>No ads, ever</span>
         <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>No account required</span>
@@ -238,46 +272,68 @@
       </div>
     </div>
     <div class="hero-visual">
-      <div class="float-chip chip-a">⬤ Trip recording…</div>
-      <div class="device">
-        <div class="screen">
-          <div class="badge-rec"><span class="dot"></span> REC 00:41</div>
-          <div class="speed-num">62</div>
-          <div class="speed-unit">KM/H · N-EAST</div>
+      <div class="hero-visual-inner" id="heroVisualInner">
+        <div class="float-chip chip-a">⬤ Trip recording…</div>
+        <div class="device">
+          <div class="screen">
+            <div class="badge-rec"><span class="dot"></span> REC 00:41</div>
+            <div class="speed-num" id="speedNum">0</div>
+            <div class="speed-unit">KM/H · N-EAST</div>
+          </div>
         </div>
+        <div class="float-chip chip-b">▲ 84 km/h top speed</div>
       </div>
-      <div class="float-chip chip-b">▲ 84 km/h top speed</div>
     </div>
   </div>
 </header>
 
 <section id="features">
   <div class="wrap">
-    <div class="section-head">
+    <div class="section-head reveal">
       <p class="eyebrow">WHAT'S INSIDE</p>
-      <h2>Four tools, one dashboard.</h2>
+      <h2>Eight tools, one dashboard.</h2>
       <p>Everything you'd normally need three separate apps for — built to work together, and to work offline.</p>
     </div>
     <div class="feature-grid">
-      <div class="feature-card">
+      <div class="feature-card reveal">
         <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3"/></svg></div>
         <h3>Live speedometer</h3>
-        <p>Current, average, and top speed, plus heading and altitude — with a mirrored HUD mode for windshield night driving.</p>
+        <p>Current, average, and top speed, plus heading and altitude, updated live from GPS.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card reveal">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h3>HUD mode</h3>
+        <p>A mirrored display for windshield reflection — a clean, glanceable heads-up view for night driving.</p>
+      </div>
+      <div class="feature-card reveal">
         <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20l-5.5-2V5L9 3m0 17l6 2m-6-2V3m6 19l5.5-2V3L15 5m0 15V5m0 0L9 3"/></svg></div>
         <h3>Trip recording</h3>
-        <p>Start a trip and SpeedLoop logs your route in the background. Review distance, duration, and the path on the map later.</p>
+        <p>Start a trip and SpeedLoop logs your route in the background, screen off included.</p>
       </div>
-      <div class="feature-card">
-        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg></div>
+      <div class="feature-card reveal">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <h3>Trip analysis &amp; map</h3>
+        <p>Review distance, duration, and top/average speed, with the full route on an interactive map.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="ic ic-accent"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg></div>
         <h3>Loop dashcam</h3>
-        <p>Records with speed, GPS, and timestamp burned into the video. Oldest clips auto-delete when storage fills — incidents are kept safe.</p>
+        <p>Speed, GPS, and timestamp burned into the video. Oldest clips auto-delete — incidents are kept safe.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card reveal">
+        <div class="ic ic-accent"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a6 6 0 0 0-6 6c0 4-2 5-2 7h16c0-2-2-3-2-7a6 6 0 0 0-6-6Z"/><path d="M9 19a3 3 0 0 0 6 0"/></svg></div>
+        <h3>Speed limit alerts</h3>
+        <p>Set a limit and get a spoken warning plus an on-screen alert the moment you go over.</p>
+      </div>
+      <div class="feature-card reveal">
         <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M12 4v16"/></svg></div>
         <h3>GPX export</h3>
-        <p>Export any trip as a standard .gpx file for other mapping tools, or import existing tracks to view inside SpeedLoop.</p>
+        <p>Export any trip as a standard .gpx file, or import existing tracks to view inside SpeedLoop.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1Z"/></svg></div>
+        <h3>Made to fit you</h3>
+        <p>Units, theme, and language, all customizable — SpeedLoop adapts to how you drive.</p>
       </div>
     </div>
   </div>
@@ -285,7 +341,7 @@
 
 <section class="privacy-strip" id="privacy">
   <div class="wrap privacy-grid">
-    <div>
+    <div class="reveal">
       <p class="eyebrow">PRIVATE BY DESIGN</p>
       <h2 style="font-size:32px;">Nothing to sign up for.<br>Nothing sent to us.</h2>
       <ul class="privacy-list">
@@ -295,7 +351,7 @@
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span><b>Delete anytime.</b> Remove a single trip, or clear all app data in one tap.</span></li>
       </ul>
     </div>
-    <div>
+    <div class="reveal">
       <table class="perm-table">
         <tr><th>Permission</th><th>Used for</th></tr>
         <tr><td>Location</td><td>Live speed, route recording, map position</td></tr>
@@ -309,22 +365,22 @@
 
 <section id="how">
   <div class="wrap">
-    <div class="section-head">
+    <div class="section-head reveal">
       <p class="eyebrow">GETTING STARTED</p>
       <h2>Up and running in under a minute.</h2>
     </div>
     <div class="steps">
-      <div class="step">
+      <div class="step reveal">
         <div class="num">1</div>
         <h3>Grant location once</h3>
         <p>SpeedLoop asks for location the first time you open the speedometer or start a trip — nothing is tracked before that.</p>
       </div>
-      <div class="step">
+      <div class="step reveal">
         <div class="num">2</div>
         <h3>Start a trip or record</h3>
         <p>Tap Start Trip to log your route, or open Dashcam to begin loop recording with the live overlay.</p>
       </div>
-      <div class="step">
+      <div class="step reveal">
         <div class="num">3</div>
         <h3>Review or export</h3>
         <p>Browse trip history on the map, export to GPX, or share a dashcam clip straight from the app.</p>
@@ -335,10 +391,10 @@
 
 <section>
   <div class="wrap">
-    <div class="cta">
+    <div class="cta reveal">
       <h2>Try SpeedLoop on your next drive.</h2>
       <p>Free. No account. No ads. Available on Google Play.</p>
-      <a class="btn btn-primary" href="#">▶ Get it on Google Play</a>
+      <a class="btn btn-primary" data-magnetic data-strength="0.3" href="#">▶ Get it on Google Play</a>
     </div>
   </div>
 </section>
@@ -350,9 +406,87 @@
       <div class="foot-links">
         <a href="#features">Features</a>
         <a href="https://claude.ai/code/artifact/49d7bd5f-0802-488d-96e5-ec8dc59434dd">Privacy Policy</a>
-        <a href="mailto:">Contact</a>
+        <a href="mailto:c.dipu0@gmail.com">Contact</a>
       </div>
     </div>
     <div class="copyright">© 2026 Chowdhury eLab. SpeedLoop is not affiliated with OpenStreetMap.</div>
   </div>
 </footer>
+
+<script>
+(function(){
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var nav = document.getElementById('nav');
+  document.addEventListener('scroll', function(){
+    nav.classList.toggle('scrolled', window.scrollY > 8);
+  }, {passive:true});
+
+  var revealEls = document.querySelectorAll('.reveal');
+  if (reduceMotion || !('IntersectionObserver' in window)) {
+    revealEls.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    revealEls.forEach(function(el, i){
+      el.style.transitionDelay = (i % 4 * 70) + 'ms';
+    });
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, {threshold:0.15, rootMargin:'0px 0px -40px 0px'});
+    revealEls.forEach(function(el){ io.observe(el); });
+  }
+
+  if (!reduceMotion) {
+    document.querySelectorAll('[data-magnetic]').forEach(function(el){
+      var strength = parseFloat(el.dataset.strength || '0.3');
+      el.addEventListener('mousemove', function(e){
+        var r = el.getBoundingClientRect();
+        var x = (e.clientX - r.left - r.width / 2) * strength;
+        var y = (e.clientY - r.top - r.height / 2) * strength;
+        el.style.transition = 'transform .08s linear';
+        el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+      });
+      el.addEventListener('mouseleave', function(){
+        el.style.transition = 'transform .4s cubic-bezier(.2,.8,.2,1)';
+        el.style.transform = 'translate(0,0)';
+      });
+    });
+
+    var heroSection = document.getElementById('heroSection');
+    var heroInner = document.getElementById('heroVisualInner');
+    if (heroSection && heroInner) {
+      heroSection.addEventListener('mousemove', function(e){
+        var r = heroSection.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width - 0.5;
+        var py = (e.clientY - r.top) / r.height - 0.5;
+        heroInner.style.transform =
+          'rotateY(' + (px * 10).toFixed(2) + 'deg) rotateX(' + (py * -10).toFixed(2) + 'deg) translateZ(0)';
+      });
+      heroSection.addEventListener('mouseleave', function(){
+        heroInner.style.transform = 'rotateY(0) rotateX(0)';
+      });
+    }
+  }
+
+  var speedEl = document.getElementById('speedNum');
+  if (speedEl) {
+    if (reduceMotion) {
+      speedEl.textContent = '62';
+    } else {
+      var target = 62, start = null, duration = 1100;
+      function tick(ts){
+        if (!start) start = ts;
+        var p = Math.min((ts - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - p, 3);
+        speedEl.textContent = Math.round(eased * target);
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+  }
+})();
+</script>
